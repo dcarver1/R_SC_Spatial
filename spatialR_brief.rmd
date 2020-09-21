@@ -1,0 +1,369 @@
+---
+title: "A Brief Introduction to Spatial Analysis in R"
+author: "carverd@colostate.edu", "caroline.conley@colostate.edu"
+date: "6/15/2020"
+output:
+  html_document: default
+---
+# Background
+The programming language R has been in active development since 1995. While initially R was created for statistical computing, it's popularity, flexibility, and open source development structure has allowed it to grow into something much more diverse. In this content we will showcase using R to import manipulate and visualize spatial data.
+<br>
+
+## Objective
+- introduce spatial libraries (raster,rgdal, sp, tmap)
+- read in raster data
+- create spatial datasets from a csv
+- perform basic spatial analysis
+- produce interactive maps
+<br>
+
+## How to
+This content is meant to function as a self based tutorial. To follow along you will need to download the example material form the [Github](https://github.com/dcarver1/R_SC_Spatial/raw/master/exampleData.7z)
+
+This file contains a protected areas raster based on the [Protected Planet](https://www.protectedplanet.net/) world database of protected areas and a csv of occurrence data of [wild squash data](https://nph.onlinelibrary.wiley.com/doi/full/10.1002/ppp3.10085)
+
+Unzip the file and store it in a convenient location for you.
+<br>
+
+The data being used in this example comes from a 2019 publication that address the conservation status of the wild relatives of squash. We will be using it to determine the number of known occurrences that have been observed within a protect area. This is a required step in detemining the conservation status of these species. If your interest in more example spatial work in R, the entire workflow for the paper can be found [here](https://github.com/dcarver1/cwrSDM)
+
+
+This material was developed using **R version 3.6.3**. Errors may arise if your version is different.
+Check your version by typing r`version` into r console.
+If you are interesting in changing your version of R there are a few options describing how [here](https://stackoverflow.com/questions/13656699/update-r-using-rstudio). Also, R studio allows you to [maintain multiple versions of R](http://derekogle.com/IFAR/supplements/installations/InstallRStudioWin.html#configuring-rstudio).
+
+### Geospatial Data Abstraction Library
+[GDAL](https://gdal.org/index.html) is the base library for nearly all spatial data analysis in any computer language. ERSI functions are based on it, QGIS functions are based on it. R spatial libraries are based on it. It's very important to know this, but you almost never engage with GDAL directly.
+
+In R, we access GDAL through the **rgdal** library, which we will install now.
+```{r eval=FALSE, warning = FALSE}
+### We're suggesting the dependences = TRUE parameter as it unsure all functions
+### will work properly. This is not common practice as it will often install
+### material that you don not need.
+# install.packages("rgdal", dependencies = TRUE)
+library(rgdal)
+```
+<br>
+We can view a summary of the package using the following command.
+<br>
+```{r eval=FALSE, warning = FALSE}
+
+#type this to view a list of the functions within the library in RStudio
+help(package = "rgdal")
+```
+<br>
+
+If we look at the functions within the library, things appear a little cryptic.
+The most readily used function is probably **writeOGR()** which allows you to write out spatial data.
+
+
+Because GDAL is so foundational, we don't often engage with the functions directly. We rely on other spatial packages which make that connection for us. **raster** for manipulating grid based datasets.  **sp** or **sf** for vector based processing. There are numerous others for more specific applications.
+<br>
+
+>**to SP or SF, that is the question** The honest answer is both. "sp" was established in 2005 and is still the backbone for many other spatial packages in R. "sf" is a newer library and is expect to replace sp over time. Maybe the best way to describe the difference is that "sp" creates a spatial object with a dataframe attached. "sf" creates a dataframe with spatial object attached. This means that "sf" objects can be manipulated using the **tidyverse**, which means they behave a bit more like we expect objects in R to behave.
+That said, there are time when you need a "sp" object or a "sf" object to enable a specific method to work. I find I lean on "sp", because it's the first one I worked with. Luckly converting between the object types is easy with functions like **st_to_sf**.
+
+<br>
+
+### Install a Few Spatial Packages
+If you've never installed these packages before, you need to uncomment them and run the code. As a general rule it's best to leave the install.packages() function in your code comment out. This way you don't reinstall the package everytime you run the code.  
+<br>
+
+```{r eval = TRUE, warning = FALSE}
+#install.packages("raster", dependencies = TRUE)
+#install.packages("sp", dependencies = TRUE)
+library(raster)
+library(sp)
+```
+
+<br>
+
+### Loading a raster into R
+
+We will rely on the raster library to bring in our first bit of spatial data.
+<br>
+
+```{r eval = TRUE, warning = FALSE}
+# set base director, which defines where your files are store/written
+baseDir <- "F:/temp" # this will be unique to your computer
+```
+<br>
+
+>**what about setwd()?**  When you set the working directly you are declaring a relative path from where R studio will look for all files which is  helpful because you can then point to files using r`file <- read.csv("~/example.csv")`. This is very efficient if all your data and outputs are stored within the file folder you set as your working directory. So if you want to use setwd() please go ahead.
+While it require more text, we recommend trying the method as written for three reasons.
+1. It is explicit in that it always lists the full path.
+2. You can easily add other directors, r`outputs <- "F:/outputFolder"` and use the same structure.
+These are minor things that help ensure your workflow is reproducible.
+3. setwd() applies to all scripts in your editor. If your reading and write files from different locations having to reset the working directory can become cumbersome and lead to errors.
+These are minor things that help ensure your workflow is reproducible. It is by no means a requirement.
+
+
+
+<br>
+
+```{r eval = TRUE, warning = FALSE}
+# read in the file
+proLands <- raster::raster(x = paste0(baseDir,"/proAreas.tif"))
+
+### Example with setwd()
+# setwd("F:/temp") # this will be unique to your computer
+# proLands <- raster::raster(x = ~"/proAreas.tif")
+
+# print it out to view some of the metadata
+print(proLands)
+```
+<br>
+The basic plot function can be helpful but it doesn't tell us a ton about the data.
+
+We can view much of the meta data associated with the file just by printing it. Content such as **extent** or **crs** can be selected using functions from the raster library or directly using a special type of indexing that is present in more complex data types(S4 objects) in R.
+<br>
+```{r eval = TRUE, warning = FALSE}
+#use indexing to retreive specific information
+raster::extent(proLands)
+
+# both provide the same information
+proLands@extent
+```
+<br>
+
+We can also use base R to visualize the data.
+<br>
+
+```{r eval = TRUE, warning = FALSE}
+#quickly visualize the content
+plot(proLands)
+```
+<br>
+While this is a spatial file, R is plotting it as it word numeric data. It is simply using the latitude and longitude ranges as a series of coordinates, but spatial coordinates
+<br>
+
+
+
+
+### Generate Spatial Data from a csv
+<br>
+
+```{r eval = TRUE, warning = FALSE}
+
+# read in the data
+d1 <- read.csv(paste0(baseDir,"/cucurbitaData.csv"))
+str(d1)
+```
+<br>
+There are a lot of observation here. Also we can see there area 3 unique values in the taxon column. We will use those values to subset the data.
+<br>
+
+```{r eval = TRUE, warning = FALSE}
+#view the unique species
+unSpec <- unique(d1$taxon)
+
+### subset all records assocaited with a species
+# select our specues of interest by indexing the list
+species1 <- unSpec[1]
+# filter the occurrence data set for all records were the taxon matches our
+# species of interest.
+d2 <- d1[d1$taxon == species1,]
+ # d1$taxon == species1 returns a vector of TRUE FALSE values, we us the to selected
+ # rows from the d1 dataframe.
+
+ # print a summary of the new subset  
+str(d2)
+```
+<br>
+
+With the dataframe clean up we will use the **sp** library to generate a spatial object.
+<br>
+
+```{r eval = TRUE, warning = FALSE}
+### generate a spatial point dataframe
+names(d2)
+# coords = df of longitude , latitude (x,y) values
+coordinates <- d2[,c(4,3)] # select all rows in the 4th and 3rd column
+# the order is important (x,y) so (longitude, latitude)
+# data = information associate with the records
+# proj4string =
+pro4 <- raster::proLands@crs # pull the coordinate reference system from the raster layer
+
+#compile all elements into the function.
+sp1 <- sp::SpatialPointsDataFrame(coords = coordinates,
+                                  data = d2,
+                         proj4string = pro4)
+# view the object
+sp1
+```
+<br>
+
+We used the **proLands** layer to pull a CRS or coordinate reference system. By doing this we are assuming that the data from the csv was collected in WGS1984. This is a big assumpion, so be aware of it.
+<br>
+
+```{r eval = TRUE, warning = FALSE}
+# view the data
+head(sp1@data)
+```
+<br>
+
+SpatialPointsDataFrame object has all the original data store with the spatial elements
+<br>
+
+```{r eval = TRUE, warning = FALSE}
+plot(sp1)
+```
+<br>
+
+The plot of the spatial point object does not tell us much. Lets load in a library specifically created for mapping spatial objects to better visual the points
+
+<br>
+
+```{r eval = TRUE, warning = FALSE}
+#install.packages("tmap", dependencies = TRUE)
+library(tmap)
+# use the quick map function to visualize the data
+tmap::qtm(sp1)
+```
+<br>
+
+Ok, so that didn't change much. We will come back to this and so how to add some complexity and interactivity to our maps with **tmap**.
+
+<br>
+
+### Comparing the data
+
+<br>
+
+Before we set into an analysis using the two datasets we will evaluate how well they align
+<br>
+
+```{r eval = TRUE, warning = FALSE}
+# check extent
+raster::extent(proLands) == raster::extent(sp1)
+raster::extent(proLands) > raster::extent(sp1)
+```
+<br>
+
+The extents of the spatial objects are different and the proLands layer is large then the point object.
+<br>
+
+```{r eval = TRUE, warning = FALSE}
+# check coordinate reference system
+raster::compareCRS(x = proLands, y = sp1)
+```
+
+<br>
+
+As the extents are different it's worth while to clip the bigger dataset to improve processing time and keep a clean study area.  
+<br>
+
+### Crop the data
+
+<br>
+```{r  warning = FALSE}
+# Crop the protected areas to the extent of the points
+p1Crop <- raster::crop(x = proLands, y = sp1)
+
+#quick visual check with qtm
+tmap::qtm(proLands)
+```
+<br>
+
+```{r warning = FALSE}
+tmap::qtm(p1Crop)
+```
+<br>
+
+
+The extent has shrunk quite a bit. Now that know the datasets match spatially we can conduct an analysis between them.
+
+<br>`
+
+### Extracting values to points
+
+<br>
+
+We will use our points and protect lands raster to determine which if any of the occurrence are found within protect lands.
+<br>
+
+```{r eval = TRUE, warning = FALSE}
+# extract values
+?extract
+```
+<br>
+
+```{r warning = FALSE}
+# extract returns a vector of length(y), therefore we can just at that
+# data as new column to our spatial points dataframe
+sp1$inProArea <- raster::extract(x = p1Crop, y = sp1)
+
+head(sp1@data)
+```
+<br>
+
+With the result recorded in the point data we can visualize the values on a map.
+<br>
+
+### Map the data
+<br>
+
+We will start by visualizing the occurrence data on an interactive map using the library tmap.
+<br>
+
+```{r warning = FALSE}
+# map the points
+map <- tmap::tm_shape(shp = sp1)+
+  tmap::tm_dots(col = "inProArea", size = 0.1,title = "Occurrences in Protected Areas")
+map
+```
+<br>
+
+The "map" is store as a tmap object. This is helpful because we can easily add new layers to the existing object.
+<br>
+
+```{r warning = FALSE}
+# add the raster to the map
+map2 <- map +
+  tmap::tm_shape(p1Crop) +
+    tmap::tm_raster(alpha = 0.4,palette = "green", title = "Protected Areas")
+map2
+```
+<br>
+Because we added the protected areas layer on top of the existing map object, we used the visualization parameter alpha to adjust the transparency so we can still see the occurrence data beneath it.
+
+To present this information as a interactive map, we change a tmap setting. We also set the background map. Lastly we did not save this product as a object, so when the code is ran it will execute directly to the terminal.
+<br>
+
+```{r warning = FALSE}
+# set the map to interactive and adjust the base map
+tmap::tmap_mode("view")
+map2 + tmap::tm_basemap("OpenStreetMap")
+```
+<br>
+Notice we did not need to change the object type to change how it is displayed. It is the same tmap object from before, now it's just an interactive rather then static map.
+<br>
+
+
+While visualizing this information in R studio it great it will be helpful to have it as a file. We can save this map as an image. As important thing to not is that the resulting file is not a spatial layer but a png.
+<br>
+
+```{r eval = FALSE, warning = FALSE}
+tmap::tmap_save(tm = map2, filename = paste0(baseDir,"/map.png"))
+```
+<br>
+
+## challenge
+<br>
+Use a for loop and a function to generate the protected points map for each species in the species list.
+<br>
+
+```{r eval = FALSE, warning = FALSE}
+#hint
+for(i in speciesList){
+  map <- function(i){
+    # subset data
+    # read in raster
+    # crop raster
+    # extract values
+    # map content
+    return(map)
+  }
+  tmap::tmap_save(tm = map, filename = paste0(i,"_protectedOccurrences.png"))
+}
+```
