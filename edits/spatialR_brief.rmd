@@ -25,22 +25,18 @@ This file contains a protected areas raster based on the [Protected Planet](http
 Unzip the file and store it in a convenient location for you.
 <br>
 
-The data being used in this example comes from a 2019 publication that address the conservation status of the wild relatives of squash. We will be using it to determine the number of known occurrences that have been observed within a protect area. This is a required step in detemining the conservation status of these species. If your interest in more example spatial work in R, the entire workflow for the paper can be found [here](https://github.com/dcarver1/cwrSDM)
-
-
-This material was developed using **R version 3.6.3**. Errors may arise if your version is different.
-Check your version by typing r`version` into r console.
-If you are interesting in changing your version of R there are a few options describing how [here](https://stackoverflow.com/questions/13656699/update-r-using-rstudio). Also, R studio allows you to [maintain multiple versions of R](http://derekogle.com/IFAR/supplements/installations/InstallRStudioWin.html#configuring-rstudio).
+## at this point it would be helpful to maybe explain what the data is and what the goal of this mapping exercise is "for this exercise, we are going to use this data to map X"
 
 ### Geospatial Data Abstraction Library
 [GDAL](https://gdal.org/index.html) is the base library for nearly all spatial data analysis in any computer language. ERSI functions are based on it, QGIS functions are based on it. R spatial libraries are based on it. It's very important to know this, but you almost never engage with GDAL directly.
 
 In R, we access GDAL through the **rgdal** library, which we will install now.
 ```{r eval=FALSE, warning = FALSE}
-### We're suggesting the dependences = TRUE parameter as it unsure all functions
-### will work properly. This is not common practice as it will often install
-### material that you don not need.
-# install.packages("rgdal", dependencies = TRUE)
+#install.packages("rgdal")
+#This options command was because I kept getting excessive warnings
+options("rgdal_show_exportToProj4_warnings"="none")
+
+## I'm going to leave this out for now. I might add it later. I think it's great information but probably a little too deep for the reader. We shall see.
 library(rgdal)
 ```
 <br>
@@ -70,8 +66,8 @@ If you've never installed these packages before, you need to uncomment them and 
 <br>
 
 ```{r eval = TRUE, warning = FALSE}
-#install.packages("raster", dependencies = TRUE)
-#install.packages("sp", dependencies = TRUE)
+#install.packages("raster")
+#install.packages("sp")
 library(raster)
 library(sp)
 ```
@@ -84,32 +80,22 @@ We will rely on the raster library to bring in our first bit of spatial data.
 <br>
 
 ```{r eval = TRUE, warning = FALSE}
-# set base director, which defines where your files are store/written
-baseDir <- "F:/temp" # this will be unique to your computer
+# set base directory, which defines where your files are store/written
+# I am in the habit of setting the working directory, not sure if there is a difference?
+setwd("~/Documents/TESTING")
+
+This is a good point. I'll explain the difference
 ```
 <br>
 
->**what about setwd()?**  When you set the working directly you are declaring a relative path from where R studio will look for all files which is  helpful because you can then point to files using r`file <- read.csv("~/example.csv")`. This is very efficient if all your data and outputs are stored within the file folder you set as your working directory. So if you want to use setwd() please go ahead.
-While it require more text, we recommend trying the method as written for three reasons.
-1. It is explicit in that it always lists the full path.
-2. You can easily add other directors, r`outputs <- "F:/outputFolder"` and use the same structure.
-These are minor things that help ensure your workflow is reproducible.
-3. setwd() applies to all scripts in your editor. If your reading and write files from different locations having to reset the working directory can become cumbersome and lead to errors.
-These are minor things that help ensure your workflow is reproducible. It is by no means a requirement.
-
-
-
+The baseDir show point to where you extract the downloaded data.
 <br>
 
 ```{r eval = TRUE, warning = FALSE}
 # read in the file
-proLands <- raster::raster(x = paste0(baseDir,"/proAreas.tif"))
-
-### Example with setwd()
-# setwd("F:/temp") # this will be unique to your computer
-# proLands <- raster::raster(x = ~"/proAreas.tif")
-
+proLands <- raster::raster(x = paste0("~/Documents/TESTING/proAreas.tif"))
 # print it out to view some of the metadata
+# At this point, I got an error saying "Discarded datum Unknown_based_on_WGS84_ellipsoid in CRS definition: +proj=longlat +ellps=WGS84 +towgs84=0,0,0,0,0,0,0 +no_defs,but +towgs84= values preservedDiscarded datum Unknown based on WGS84 ellipsoid in CRS definition,but +towgs84= values preserved" However, it printed as normal and everything else proceeded as it ought to of. not sure what that is but figured i would report it anyways.
 print(proLands)
 ```
 <br>
@@ -146,7 +132,7 @@ While this is a spatial file, R is plotting it as it word numeric data. It is si
 ```{r eval = TRUE, warning = FALSE}
 
 # read in the data
-d1 <- read.csv(paste0(baseDir,"/cucurbitaData.csv"))
+d1 <- read.csv(paste0("~/Documents/TESTING/cucurbitaData.csv"))
 str(d1)
 ```
 <br>
@@ -157,43 +143,32 @@ There are a lot of observation here. Also we can see there area 3 unique values 
 #view the unique species
 unSpec <- unique(d1$taxon)
 
-### subset all records assocaited with a species
-# select our specues of interest by indexing the list
-species1 <- unSpec[1]
-# filter the occurrence data set for all records were the taxon matches our
-# species of interest.
-d2 <- d1[d1$taxon == species1,]
- # d1$taxon == species1 returns a vector of TRUE FALSE values, we us the to selected
- # rows from the d1 dataframe.
-
- # print a summary of the new subset  
+# subset all records associated with a species
+d2 <- d1[d1$taxon == unSpec[1],]
 str(d2)
 ```
 <br>
 
 With the dataframe clean up we will use the **sp** library to generate a spatial object.
+
+## this part was a bit over my head, but maybe I am not the norm
+Ok good to note. I'll break out the indexing and introduce some more complete comments. The goal will be one action per line of code.
 <br>
 
 ```{r eval = TRUE, warning = FALSE}
-### generate a spatial point dataframe
-names(d2)
+# generate a spatial point dataframe
 # coords = df of longitude , latitude (x,y) values
-coordinates <- d2[,c(4,3)] # select all rows in the 4th and 3rd column
-# the order is important (x,y) so (longitude, latitude)
 # data = information associate with the records
 # proj4string =
-pro4 <- raster::proLands@crs # pull the coordinate reference system from the raster layer
-
-#compile all elements into the function.
-sp1 <- sp::SpatialPointsDataFrame(coords = coordinates,
+sp1 <- sp::SpatialPointsDataFrame(coords = d2[,c(4,3)],
                                   data = d2,
-                         proj4string = pro4)
+                         proj4string = proLands@crs)
 # view the object
 sp1
 ```
 <br>
 
-We used the **proLands** layer to pull a CRS or coordinate reference system. By doing this we are assuming that the data from the csv was collected in WGS1984. This is a big assumpion, so be aware of it.
+We used the **proLands** layer to pull a CRS or coordinate reference system. By doing this we are assuming that the data from the csv was collected in WGS1984.
 <br>
 
 ```{r eval = TRUE, warning = FALSE}
@@ -215,9 +190,16 @@ The plot of the spatial point object does not tell us much. Lets load in a libra
 <br>
 
 ```{r eval = TRUE, warning = FALSE}
-#install.packages("tmap", dependencies = TRUE)
+#install.packages("tmap")
+#install.packages("XML")
+# you need XML to run tmap and I previously did not have this package
+# also, I was generally having trouble with some of these packages and then I updated my R to the newest version and that helped (so you may want to add in something about needing a more updated version of R)
+library(xml2)
+Ok, good note about the R version. I'll add a writen warning at the top saying that this was develop in version 3.63. Error may arise if you are using a different version.
+
+For the libraries, we will add the install dependences == true command and that should help with the package issues.
 library(tmap)
-# use the quick map function to visualize the data
+# use the qick map function to visualize the data
 tmap::qtm(sp1)
 ```
 <br>
@@ -235,8 +217,8 @@ Before we set into an analysis using the two datasets we will evaluate how well 
 
 ```{r eval = TRUE, warning = FALSE}
 # check extent
-raster::extent(proLands) == raster::extent(sp1)
-raster::extent(proLands) > raster::extent(sp1)
+extent(proLands) == extent(sp1)
+extent(proLands) > extent(sp1)
 ```
 <br>
 
@@ -261,12 +243,16 @@ As the extents are different it's worth while to clip the bigger dataset to impr
 p1Crop <- raster::crop(x = proLands, y = sp1)
 
 #quick visual check with qtm
-tmap::qtm(proLands)
+# it seemed like qtm wasn't compatible with the newest version of R so I had to get the newer version
+install.packages("qtm2")
+library(qtm)
+interesting. I'm not familiar with qtm2? I'll include reference to all function librarys. so qtm() will become tmap::qtm() this should help
+qtm(proLands)
 ```
 <br>
 
 ```{r warning = FALSE}
-tmap::qtm(p1Crop)
+qtm(p1Crop)
 ```
 <br>
 
@@ -308,8 +294,8 @@ We will start by visualizing the occurrence data on an interactive map using the
 
 ```{r warning = FALSE}
 # map the points
-map <- tmap::tm_shape(shp = sp1)+
-  tmap::tm_dots(col = "inProArea", size = 0.1,title = "Occurrences in Protected Areas")
+map <- tm_shape(shp = sp1)+
+  tm_dots(col = "inProArea", size = 0.1,title = "Occurrences in Protected Areas")
 map
 ```
 <br>
@@ -320,8 +306,8 @@ The "map" is store as a tmap object. This is helpful because we can easily add n
 ```{r warning = FALSE}
 # add the raster to the map
 map2 <- map +
-  tmap::tm_shape(p1Crop) +
-    tmap::tm_raster(alpha = 0.4,palette = "green", title = "Protected Areas")
+  tm_shape(p1Crop) +
+    tm_raster(alpha = 0.4,palette = "green", title = "Protected Areas")
 map2
 ```
 <br>
@@ -332,8 +318,12 @@ To present this information as a interactive map, we change a tmap setting. We a
 
 ```{r warning = FALSE}
 # set the map to interactive and adjust the base map
+# you need the package knitr to do this which I didn't have previously
+#install.packages("knitr")
+library(knitr)
+Perfect thank you
 tmap::tmap_mode("view")
-map2 + tmap::tm_basemap("OpenStreetMap")
+map2 + tm_basemap("OpenStreetMap")
 ```
 <br>
 Notice we did not need to change the object type to change how it is displayed. It is the same tmap object from before, now it's just an interactive rather then static map.
@@ -344,7 +334,7 @@ While visualizing this information in R studio it great it will be helpful to ha
 <br>
 
 ```{r eval = FALSE, warning = FALSE}
-tmap::tmap_save(tm = map2, filename = paste0(baseDir,"/map.png"))
+tmap::tmap_save(tm = map2, filename = paste0("~/Documents/TESTING/map.png"))
 ```
 <br>
 

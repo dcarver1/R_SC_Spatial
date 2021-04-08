@@ -1,0 +1,96 @@
+---
+title: "Why Learn Programming"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## How to Speak Machine 
+
+```{r out.width="400px"}
+knitr::include_graphics("D:/R_SC_Spatial/images/htsm.jpg")
+```
+
+
+> Understanding how computational systems work is essential in understanding the growth and development of our modern society. 
+
+https://howtospeakmachine.com/
+
+
+## La Jamais Contente
+
+
+![Land Speed Record 1899 - 100km/h](D:\R_SC_Spatial\images\Jamais_contente.jpg)
+
+
+2020 land speed record is 1,220 km/h 
+
+## Rate of Change
+
+```{r, echo = TRUE}
+rOC <- (1220 - 100) / (1997 - 1899)
+# linear change per year
+rOC
+```
+
+## the growth of tech 
+
+```{r echo = TRUE}
+# initial state 
+x <- 100 
+# speed of light in kilometers per hour 
+sol <- 1079000000 
+
+n = 1 
+while(x < sol){
+  x <- x*2
+  n = n+1
+}
+# Speed in km/h
+print(x) 
+```
+
+## Years to the speed of light 
+
+```{r  echo = TRUE}
+### number of iterations(years) required 
+print(n)
+# if double occurs every year,
+# in what year would the car break the speed of light 
+1899+n
+```
+
+## Rate of processing power 
+```{r out.width="700px"}
+knitr::include_graphics("D:/R_SC_Spatial/images/moorsLaw.png")
+```
+
+## Software is what makes it impactful 
+
+**Learning to code** <- "Develop understanding of" 
+
+**Computer excel at** 
+
+- precision and reproducibility 
+- for loops 
+- functions 
+
+**Those who use them**
+
+- build for function(not perfection) and expect change
+- quality comes from iterations 
+- how processes scale 
+
+## Why Learn to Code 
+
+In the present  
+
+- **It will help you with your current needs** 
+
+In the future 
+
+- **It will help you understand what's running in the background of our world**
+
+Let's do it. 
