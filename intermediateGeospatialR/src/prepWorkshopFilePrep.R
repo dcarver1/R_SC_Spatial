@@ -15,15 +15,26 @@ baseDir <- "D:/geoSpatialCentroid/softwareCarpentry/intermediateGeospatialR"
 ## structure for the storage of the work. That way this script can we much cleaner looking 
 
 ### preps night light image to texas 
-processImagery<- function(){
-  # Process image to texas and resample to 1km cells 
-  im <- list.files(path = "D:/geoSpatialCentroid/covidNightLights/data/2019",
-                   full.names = TRUE,
-                   recursive = TRUE, 
-                   pattern = "avg_rade9h.tif")
+processImagery<- function(baseDir, radiance){
+  if(radiance == TRUE){
+    # Process image to texas and resample to 1km cells 
+    im <- list.files(path = "F:/geoSpatialCentroid/covidNightLights/data/2019",
+                     full.names = TRUE,
+                     recursive = TRUE, 
+                     pattern = "avg_rade9h.tif")
+  }else{
+    ### proces counts data 
+    im <- list.files(path = "F:/geoSpatialCentroid/covidNightLights/data/2019",
+                     full.names = TRUE,
+                     recursive = TRUE, 
+                     pattern = "cf_cvg.tif")
+  }
+
+  
+
   
   # pull spatial feature for the lone star star 
-  bigTex <- sf::st_read("D:/genericSpatialData/US/states/tl_2017_us_state.shp")%>%
+  bigTex <- sf::st_read("F:/genericSpatialData/US/states/tl_2017_us_state.shp")%>%
     dplyr::filter(NAME == "Texas")
   
   
@@ -36,15 +47,28 @@ processImagery<- function(){
         m1 <- j
       }
     }
-    r1 <- raster::raster(im[i]) %>% # read in image
-      raster::crop(bigTex) %>% # limited extent 
-      raster::mask(bigTex) %>% # remove area outside of state
-      raster::projectRaster(res = c(0.01666667,0.01666667), 
-                            crs = template@crs,
-                            method = "bilinear") # resample to 10 arc secs for file size
-    raster::writeRaster(x = r1, filename = paste0(output, "/",m1,"_10arc.tif"))
+    if(radiance == TRUE){
+      r1 <- raster::raster(im[i]) %>% # read in image
+        raster::crop(bigTex) %>% # limited extent 
+        raster::mask(bigTex) %>% # remove area outside of state
+        raster::projectRaster(res = c(0.01666667,0.01666667), 
+                              crs = template@crs,
+                              method = "bilinear") # resample to 10 arc secs for file size
+      raster::writeRaster(x = r1, filename = paste0(output, "/",m1,"_10arc.tif"))
+    }else{
+      r1 <- raster::raster(im[i]) %>% # read in image
+        raster::crop(bigTex) %>% # limited extent 
+        raster::mask(bigTex) %>% # remove area outside of state
+        raster::projectRaster(res = c(0.01666667,0.01666667), 
+                              crs = template@crs,
+                              method = "ngb") # resample to 10 arc secs for file size
+      raster::writeRaster(x = r1, filename = paste0(output, "/",m1,"_10arc_counts.tif"), overwrite = TRUE)
+    }
   }
 }
+
+
+
 ### preps county data and census tract data within the county 
 processCensus <- function(){
   # tidycensus::census_api_key("you need to apply for one here https://api.census.gov/data/key_signup.html", install = TRUE)

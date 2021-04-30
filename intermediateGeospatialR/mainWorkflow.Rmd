@@ -156,7 +156,7 @@ qtm(r3)
 
 We do some indexing and then call the `crop` and `mask` functions from the last `raster` library. The result is our state level raster has been reduced down to the county level. 
 As we know that works, let's try to streamline this process a little bit so that we're not creating so many variables. And we do this by utilizing `dplyr` piping structure, the pipe is a symbol, or an operator that effectively takes the output of one function, and places as input into another function. 
-this allows you toconnect functions output, input output, Input, and it makes for efficient code. 
+this allows you to connect functions output, input output, Input, and it makes for efficient code. 
 
 ```{r}
 ### select county for interest 
@@ -441,7 +441,7 @@ Eureka, there is possible a good deal of variability in the monthly data as the 
 
 ```{r}
 #calculate stats on monthly spread. 
-names(df2)
+names(df)
 df2$variance <- NA
 df2$min <- NA
 df2$max <- NA
@@ -456,7 +456,7 @@ There is quite a lot of variability in some of the locations. We can evaluate th
 **content of the next section** 
 
 ## one last thing 
-Ahh, while the corraltive relationships between our census tract metrics and the nightlight radience do look great on paper, they might look better on a map. 
+Ahh, while the correlative relationships between our census tract metrics and the nightlight radiance do look great on paper, they might look better on a map. 
 
 ```{r}
 library(tmap)
