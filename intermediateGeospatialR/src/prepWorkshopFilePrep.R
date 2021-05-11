@@ -14,6 +14,8 @@ baseDir <- "D:/geoSpatialCentroid/softwareCarpentry/intermediateGeospatialR"
 ## these function are not really reusable peice of code. I'm mostly using the funtion 
 ## structure for the storage of the work. That way this script can we much cleaner looking 
 
+##EDIT: geoSpatialCentroid folder not in repo, not sure if wanting to include to walkthrough
+##      what the function is doing or just talk it through during the lesson
 ### preps night light image to texas 
 processImagery<- function(baseDir, radiance){
   if(radiance == TRUE){
@@ -23,23 +25,23 @@ processImagery<- function(baseDir, radiance){
                      recursive = TRUE, 
                      pattern = "avg_rade9h.tif")
   }else{
-    ### proces counts data 
+    ### process counts data 
     im <- list.files(path = "F:/geoSpatialCentroid/covidNightLights/data/2019",
                      full.names = TRUE,
                      recursive = TRUE, 
                      pattern = "cf_cvg.tif")
   }
-
+}
   
 
-  
-  # pull spatial feature for the lone star star 
-  bigTex <- sf::st_read("F:/genericSpatialData/US/states/tl_2017_us_state.shp")%>%
+ ## EDIT: states shapefile not in repo, downloaded from Tiger and updated code to work with baseDir
+  # pull spatial feature for the lone star state 
+  bigTex <- sf::st_read(paste0(baseDir,"/genericSpatialData/US/states/tl_2017_us_state.shp"))%>%
     dplyr::filter(NAME == "Texas")
   
   
   output <- paste0(baseDir,"/data/nightLights")
-  months <- c("janurary", "feburary", "march", "april", "may", "june", "july","august", "september", "october", "november", "december")
+  months <- c("january", "feburary", "march", "april", "may", "june", "july","august", "september", "october", "november", "december")
   template <- raster::raster(im[1])
   for(i in seq_along(im)){
     for(j in months){
