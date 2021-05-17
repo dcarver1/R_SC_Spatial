@@ -1,5 +1,5 @@
 ---
-title: Intermediate Spatial Analysis in R
+title: Intermediate Spatial Analysis in R - day 1
 author: carverd@colostate.edu 
 output:
   html_document:
