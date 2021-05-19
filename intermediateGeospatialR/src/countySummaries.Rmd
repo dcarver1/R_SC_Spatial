@@ -14,9 +14,18 @@ smooth_scroll: yes
 ---
 
  
-### Assessment of `r county`
+### Assessment of filter effects
 
-```{r echo=FALSE, message=FALSE, warning=F}
+```{r}
+# set some standard parameter for the documents. 
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
+```
+
+We can set standard options for our rmd documents using the `knitr::opts_chunk$set` function. In this case `echo = TRUE` means the code will be shown, `message=FALSE` means that internal message from functions will not print to the document, and `warning = FALSE` means that warning message will not print to the document. These setting will apply to all code block unless you specify differently in a block.
+More details can be found at the [rmd cheat sheet](https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf).
+
+
+```{r}
 # use pacman to load require packages 
 if (!require("pacman")) install.packages("pacman") ## important because we will be calling this script mulitple times 
 pacman::p_load(dplyr,raster,tmap,plotly)
@@ -24,112 +33,171 @@ pacman::p_load(dplyr,raster,tmap,plotly)
 options(scipen=999)
 # set tmap to interactive viewing 
 tmap::tmap_mode("view")
-
-baseDir <- "F:/geoSpatialCentroid/softwareCarpentry/intermediateGeospatialR"
-county <- "Bexar"
-months <- c("april", "may", "june", "july")
-filters <- c(2,6,10)
 ```
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+Load in package and set some specific parameters. We're using the library `pacman` to reduce the number of lines need to load in multiple libraries. This is a helpful tool to know about. 
 
+
+```{r}
+# input features
+# baseDir <- "D:/R_SC_Spatial/intermediateGeospatialR/"
+# county <- "Bexar"
+# months <- c("april", "may", "june", "july")
+# filters <- c(2,6,10)
+```
+
+We will come back to this code block through the lesson. Think about these objects as the input parameters to a function. We need to know where to look for data, what county we are interested in, what months we are evaluating, as well as what filter levels we want to apply to the data. All these parameters were pulled from the workflow we put together in `day2_workflow.rmd`. 
+
+
+```{r}
 ### grab imagery for county 
 images <- list.files(paste0(baseDir,"/data/nightLights/", county), pattern = ".tif", full.names = TRUE)
 counts <- list.files(paste0(baseDir,"/data/nightLights/"), pattern = "_counts.tif", full.names = TRUE)
+```
 
+In the previous example we just pulled a single radiance and counts image and ran something like what's listed below 
+
+```{r, eval = FALSE}
+# create a dataframe to store information 
+
+# loop over all filter option 
+for(i in filter){
+  # create a mask based on the counts raster and filter 
+  # apply that mask to the radiance raster 
+  # detemine all vals excluding NAs 
+  # calculate mean, median and percent area and store in data frame
+}
+
+```
+
+We still need to do all this but nowwe have another level of complexity. We need to apply this process to all months not just one. We will frame it out below 
+
+```{r, eval =FALSE}
+
+for(m in months){
+  # call in radiance and counts imagery base on month 
+  # clip and mask the counts imagery based on radiance feature 
+  # create a dataframe to store information 
+  # loop over all filter option 
+  for(i in filter){
+    # create a mask based on the counts raster and filter 
+    # apply that mask to the radiance raster 
+    # detemine all vals excluding NAs 
+    # calculate mean, median and percent area and store in data frame
+  }
+  # Store information from dataframe in comprehesive dataframe. 
+}
+
+```
+
+The indexing and geoprocessing within the loop of the months is nothing new. It is worth noting that we are creating a new dataframe each month rather then outside of the initail loop. This is not the only way to do it, but i find it to be the easiest way. This is hard to visualize at the moment but I'll just say that if we moved the dataframe initialization outside the first loop we would need to change how we store the data we generate. 
+
+We'll fill out our outline with code.  
+
+```{r}
 # loop over months 
 for(i in seq_along(months)){
   # select rasters using character match 
   m <- months[i]
-  r1 <- raster::raster(images[grepl(pattern = m, x = images)]) 
-  r1[r1 == 0] <- NA
-  # create a mask 
+  # grab the raster base on match in the file name 
+  r1 <- raster::raster(images[grepl(pattern = m, x = images)])
+  # create a mask object of the radience feature
   mask <- r1 
-  mask[!is.na(mask)] <- 1
-  # look at the number of values left
-  # t3 <- length(values(r1)[!is.na(values(r1))])
-
-  c1 <- raster::raster(counts[grepl(pattern = m, x = counts)])*mask 
-  #df to store results 
-  df1 <- data.frame(matrix(nrow = 3, ncol = 2+length(filters)))
-  colnames(df1) <- c("month","measure", as.character(filters)) 
+  mask[mask > 0] <- 1
+  mask[mask != 1] <- NA
+  # determine the total number of cells of interest by sum all values.
+  totalCells <- sum(values(mask), na.rm = TRUE)
+  # pull the correct counts feature base on character match and apply mask
+  count1 <- raster::raster(counts[grepl(pattern = m, x = counts)])*mask 
+  
+  # create df to store results 
+  df1 <- data.frame(matrix(nrow = length(filters), ncol = 5))
+  colnames(df1) <- c("month","filter","mean","median", "totalArea") 
   df1$month <- m
-  df1$measure <- c("mean", "median", "count")
+  df1$filter <- filters
     ## loop over all seq 
     for(j in seq_along(filters)){
       # generate a mask with the counts image based on the seq value 
-      c2 <- c1 
+      c2 <- count1 
       # replace all values based on filter val
-      c2[c2 < filters[j], ] <- NA 
+      c2[c2 < filters[j]] <- NA 
       # generate a mask base on new filtered data 
-      c2[!is.na(c2), ]<- 1 
+      c2[!is.na(c2)]<- 1 
       # apply that mask to radaince value 
       r2 <- r1 * c2 
       # calculate Mean, median of masked radiance raster 
       vals <- raster::values(r2)
       # drop all na values 
       vals <- vals[!is.na(vals)]
-      df1[1,j+2] <- mean(vals)
-      df1[2,j+2] <- median(vals)
-      # count total obervationa in mask. 
-      df1[3,j+2] <- length(vals) 
+      # calculate values and assign features to dataframe
+      df1[j,"mean"] <- mean(vals)
+      df1[j,"median"] <- median(vals)
+      # count total obervation in mask. 
+      df1[j,"totalArea"] <- 100*(length(vals)/totalCells) 
     }
+  # create a new dataframe object on first pass then add directly to that df on 
+  # subsequent passes 
   if(i == 1){
     df <- df1
   }else{
     df <- dplyr::bind_rows(df, df1)
   }
 }
-
+df
 ```
 
-## Map of radiance values for most complete month 
+We have all our data for each month in a single dataframe and this alone shows some very telling tends. May seems to be the most effected by cloud cover where only four percent of the county area had six or more cloud free days. Where as July is a much more sunny time of the year.
 
-Area in red shows the extent of the county. 
-The area in the blue to yellow gradient shows the unfiltered observations. 
-
-Filtering at this point was performed by the working established at the School of Mines. 
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-### map of the image location with the most observations 
-m1 <- df %>%
-  dplyr::filter(measure == "count")%>%
-  dplyr::arrange(desc(`10`))%>%
-  dplyr::select(month)
-# most obsevations 
-r1 <- raster::raster(images[grepl(pattern = m1$month[1], x = images)]) 
-r2 <- r1 
-r2[r2==0,] <- NA
-
-tm_shape(r1)+
-  tm_raster(breaks = c(0,max(raster::values(r1),na.rm = TRUE)), showNA = FALSE,
-            palette = "-Set1", title = "extent of county")+
-tmap::tm_shape(r2)+
-  tm_raster(palette = "-YlGnBu", style = "cont", title = m)
-```
-
-## Map of number of observations for each mean radiance 
-
-Number of observations used to determine the monthly mean value at a given location
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-### map of the number of observations at a location 
-c1 <- raster::raster(counts[grepl(pattern = m, x = counts)]) *mask
-max <- max(unique(values(c1)), na.rm = TRUE)
-if(max %% 2){
-  b1 <- seq(from = 0, to = max, 2)  
-}else{
-  b1 <- seq(from = 0, to = max+1, 2)  
-}
-
-
-tmap::tm_shape(c1)+
-  tm_raster(breaks = b1, 
-            title = m)
-
-```
+Much like before gleaming these conclusion from the table is possible but visualized well they will jump off the page. 
 
 ## Relationship between number of observations and county level statistics 
+
+If we try to simply plug in the data we have to our existing plot workflow we get something strange
+```{r}
+p1 <- plot_ly() %>%
+  add_trace(x=df$filter, y=df$mean,type = 'scatter',  line = list(dash = 'dash', shape= "spline"))%>%
+  layout(xaxis = list(title = "Filter Level "),
+            yaxis = list(title = "Mean"))
+p1
+```
+
+
+The function does not know that each month is a unique feature so it is plotting the relationship observed over multiple months on on continuous line. It looks cool, but it's not informative. 
+
+To fix this we need to bring the month data into the process. The can but done easily using a built parameter. 
+
+```{r}
+p1 <- plot_ly()%>%
+  add_trace(x=df$filter, y=df$mean,type = 'scatter', color = df$month, line = list(dash = 'dash', shape= "spline"))%>%
+  layout(xaxis = list(title = "Filter Level "),
+            yaxis = list(title = "Mean"))
+p1
+```
+
+
+This looks great. It's clear and shows the variability across the months. We can add the mean and percent area to get the full picture. 
+
+```{r}
+### generate the three specific plots 
+# mean
+p1 <- plot_ly() %>%
+  add_trace(x=df$filter, y=df$mean,type = 'scatter', color = df$month, line = list(dash = 'dash', shape= "spline"))%>%
+  layout(xaxis = list(title = "Filter Level"),
+            yaxis = list(title = "Mean"))
+# median 
+p2 <- plot_ly() %>%
+    add_trace(x=df$filter, y=df$median,type = 'scatter', color = df$month, line = list(dash = 'dash', shape= "spline"),     showlegend = FALSE)%>%
+  layout(xaxis = list(title = "Filter Level"),
+         yaxis = list(title = "Median"))
+# percent area
+p3 <- plot_ly() %>%
+  add_trace(x=df$filter, y=df$totalArea,type = 'scatter', color = df$month, line = list(dash = 'dashdot', shape= "spline"),  showlegend = FALSE) %>%
+  layout(xaxis = list(title = "Filter Level"),
+         yaxis = list(title = "Percent Area"))
+### create the subplot
+p<- plotly::subplot(p1,p2,p3, nrows = 3, shareX = TRUE, titleY = TRUE)
+p 
+```
 
 Plot 1 : The trend of county level mean when filtered based on the number of observations at a location 
 
@@ -139,73 +207,18 @@ Plot 2 : The trend of county level median when filtered based on the number of o
 
 Plot 3 : The percent of the counties total area present when filtered based on the number of observations at a location 
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-### genrate the plot 
-# present a graph of the average values (mean and median) across the county with all measures and increasingly highly levels of filtering. 
 
-df2 <- df[df$measure != "test2", ]
-# create empty dataframe 
-df3 <- data.frame(matrix(nrow = length(filters) * length(unique(df2$month)), ncol = 5))
-colnames(df3) <- c("month","filter", "mean", "median", "counts")
-df3$month <- factor(rep(unique(df2$month), each = length(filters)), 
-                       levels = c(unique(df2$month)))
-df3$filter <- rep(unique(filters), length(unique(df3$month)))
-mean <- c()
-median <- c()
-count <- c()
-for(i in seq_along(unique(df2$month))){
-  df2a <- df2[df2$month == unique(df3$month)[i], ]
-  mean <- c(mean, as.numeric(df2a[df2a$measure== "mean", 3:ncol(df3)]))
-  median <- c(median, as.numeric(df2a[df2a$measure== "median", 3:ncol(df3)]))
-  count <- c(count, as.numeric(df2a[df2a$measure== "count", 3:ncol(df3)]))
-}
-df3$mean <- mean
-df3$median <- median
-df3$counts <- count
+## Connecting RMD back to R script 
 
-### seperate the values 
-library(plotly)
-p1 <- plot_ly(mode = "lines+markers", sort = FALSE ) %>%
-  add_trace(x=df3$filter, y=df3$mean,type = 'scatter', color = df3$month, line = list(dash = 'dash', shape= "spline"))%>%
-  layout(xaxis = list(title = "Number of Observations "),
-            yaxis = list(title = "Mean"))
+As we mentioned at the beginning. This RMD can be called like a function from an R script. We basically need a means of defining the parameters below within an R script so that they can be read in within the RMD. 
 
-p2 <- plot_ly(mode = "lines+markers" ) %>%
-  add_trace(x=df3$filter, y=df3$median,type = 'scatter', color = df3$month, line = list(dash = 'solid', shape= "spline"), showlegend = FALSE) %>%
-  layout(xaxis = list(title = "Number of Observations "),
-         yaxis = list(title = "Median"))
+**save your RMD** we will be calling it directly in the next section 
 
-p3 <- plot_ly(mode = "lines+markers" ) %>%
-  add_trace(x=df3$filter, y=df3$counts,type = 'scatter', color = df3$month, line = list(dash = 'dashdot', shape= "spline"), showlegend = FALSE) %>%
-  layout(xaxis = list(title = "Number of Observations "),
-         yaxis = list(title = "% Observations"))
-
-p<- plotly::subplot(p1,p2,p3, nrows = 3, shareX = TRUE, titleY = TRUE)
-p 
-
-```
-
-### Example: least well represented month 
-
-Red: full extent of the county 
-
-Blue - yellow: Radience values in  the county with at least six observations.  
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-### map of the image location
-# select the last month in the list 
-m <- as.character(m1$month[nrow(m1)])
-r1 <- raster::raster(images[grepl(pattern = m, x = images)]) 
-c1 <- raster::raster(counts[grepl(pattern = m, x = counts)])
-# define filter level from last column name
-f1 <- colnames(df)[ncol(df)]
-
-c1[c1 < as.numeric(f1)] <- NA
-r2 <- r1 * c1 * mask
-tm_shape(r1)+
-  tm_raster(breaks = c(0,max(raster::values(r1),na.rm = TRUE)), showNA = FALSE,
-            palette = "-Set1", title = "extent of county")+
-tm_shape(r2)+
-  tm_raster(palette = "-YlGnBu", style = "cont", title = paste0(m, " 6 plus observations"))
+```{r, eval=FALSE}
+# input features 
+baseDir <- "D:/R_SC_Spatial/intermediateGeospatialR/"
+county <- "Bexar"
+months <- c("april", "may", "june", "july")
+filters <- c(2,6,10)
 ```
 
