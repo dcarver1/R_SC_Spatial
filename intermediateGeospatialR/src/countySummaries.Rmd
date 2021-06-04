@@ -1,6 +1,6 @@
 ---
 title: Intermediate Spatial Analysis in R - Monthly Summaries
-author: carverd@colostate.edu 
+author: carverd@colostate.edu; contributors @ github (ecarcelen, habpippin) 
 output:
   html_document:
   code_folding: hide
@@ -15,6 +15,13 @@ smooth_scroll: yes
 
  
 ### Assessment of filter effects
+
+In this section we will be building a RMD document that takes the methods we developed in the previous sections and puts them into a framework that will become a reproducible work flow. 
+
+At the end of this section, you will have  rmd file that has flexible input paraments, so it can be called to produce maps and figure at various time frames and locations 
+
+The last past of this lesson we will create an R script that we can used to iterate over multiple parameters to produce multiple summary documents. 
+
 
 ```{r}
 # set some standard parameter for the documents. 
@@ -40,23 +47,27 @@ Load in package and set some specific parameters. We're using the library `pacma
 
 ```{r}
 # input features
-# baseDir <- "D:/R_SC_Spatial/intermediateGeospatialR/"
-# county <- "Bexar"
-# months <- c("april", "may", "june", "july")
-# filters <- c(2,6,10)
+baseDir <- "F:/R_SC_Spatial/intermediateGeospatialR/"
+county <- "Bexar"
+months <- c("april", "may", "june", "july")
+filters <- c(2,6,10)
 ```
 
 We will come back to this code block through the lesson. Think about these objects as the input parameters to a function. We need to know where to look for data, what county we are interested in, what months we are evaluating, as well as what filter levels we want to apply to the data. All these parameters were pulled from the workflow we put together in `day2_workflow.rmd`. 
 
-
+<br>
 ```{r}
 ### grab imagery for county 
 images <- list.files(paste0(baseDir,"/data/nightLights/", county), pattern = ".tif", full.names = TRUE)
 counts <- list.files(paste0(baseDir,"/data/nightLights/"), pattern = "_counts.tif", full.names = TRUE)
 ```
+<br>
+
+We're grabbing all the imagery associated with our areas of interest. 
+### Setting up the Workflow 
 
 In the previous example we just pulled a single radiance and counts image and ran something like what's listed below 
-
+<br>
 ```{r, eval = FALSE}
 # create a dataframe to store information 
 
@@ -69,9 +80,10 @@ for(i in filter){
 }
 
 ```
+<br>
 
-We still need to do all this but nowwe have another level of complexity. We need to apply this process to all months not just one. We will frame it out below 
-
+We still need to do all this but now we have another level of complexity. We need to apply this process to all months not just one. We will frame it out below 
+<br>
 ```{r, eval =FALSE}
 
 for(m in months){
@@ -89,11 +101,12 @@ for(m in months){
 }
 
 ```
+<br>
 
-The indexing and geoprocessing within the loop of the months is nothing new. It is worth noting that we are creating a new dataframe each month rather then outside of the initail loop. This is not the only way to do it, but i find it to be the easiest way. This is hard to visualize at the moment but I'll just say that if we moved the dataframe initialization outside the first loop we would need to change how we store the data we generate. 
+The indexing and geoprocessing within the loop of the months is nothing new. It is worth noting that we are creating a new dataframe each month rather then outside of the initial loop. This is not the only way to do it, but I find it to be the easiest way. This is hard to visualize at the moment but I'll just say that if we moved the dataframe initialization outside the first loop we would need to change how we store the data we generate. 
 
 We'll fill out our outline with code.  
-
+<br>
 ```{r}
 # loop over months 
 for(i in seq_along(months)){
@@ -106,7 +119,7 @@ for(i in seq_along(months)){
   mask[mask > 0] <- 1
   mask[mask != 1] <- NA
   # determine the total number of cells of interest by sum all values.
-  totalCells <- sum(values(mask), na.rm = TRUE)
+  totalCells <- sum(values(mask), na.rm = TRUE) ### this works because all values are 1. 
   # pull the correct counts feature base on character match and apply mask
   count1 <- raster::raster(counts[grepl(pattern = m, x = counts)])*mask 
   
@@ -145,14 +158,17 @@ for(i in seq_along(months)){
 }
 df
 ```
+<br>
 
 We have all our data for each month in a single dataframe and this alone shows some very telling tends. May seems to be the most effected by cloud cover where only four percent of the county area had six or more cloud free days. Where as July is a much more sunny time of the year.
 
-Much like before gleaming these conclusion from the table is possible but visualized well they will jump off the page. 
+Much like before gleaming these conclusion from the table is possible but if visualized well they will jump off the page. 
+<br>
 
 ## Relationship between number of observations and county level statistics 
 
 If we try to simply plug in the data we have to our existing plot workflow we get something strange
+<br>
 ```{r}
 p1 <- plot_ly() %>%
   add_trace(x=df$filter, y=df$mean,type = 'scatter',  line = list(dash = 'dash', shape= "spline"))%>%
@@ -160,12 +176,14 @@ p1 <- plot_ly() %>%
             yaxis = list(title = "Mean"))
 p1
 ```
+<br>
 
 
 The function does not know that each month is a unique feature so it is plotting the relationship observed over multiple months on on continuous line. It looks cool, but it's not informative. 
 
 To fix this we need to bring the month data into the process. The can but done easily using a built parameter. 
 
+<br>
 ```{r}
 p1 <- plot_ly()%>%
   add_trace(x=df$filter, y=df$mean,type = 'scatter', color = df$month, line = list(dash = 'dash', shape= "spline"))%>%
@@ -173,10 +191,11 @@ p1 <- plot_ly()%>%
             yaxis = list(title = "Mean"))
 p1
 ```
+<br>
 
 
 This looks great. It's clear and shows the variability across the months. We can add the mean and percent area to get the full picture. 
-
+<br>
 ```{r}
 ### generate the three specific plots 
 # mean
@@ -198,6 +217,7 @@ p3 <- plot_ly() %>%
 p<- plotly::subplot(p1,p2,p3, nrows = 3, shareX = TRUE, titleY = TRUE)
 p 
 ```
+<br>
 
 Plot 1 : The trend of county level mean when filtered based on the number of observations at a location 
 
@@ -216,7 +236,7 @@ As we mentioned at the beginning. This RMD can be called like a function from an
 
 ```{r, eval=FALSE}
 # input features 
-baseDir <- "D:/R_SC_Spatial/intermediateGeospatialR/"
+baseDir <- "F:/R_SC_Spatial/intermediateGeospatialR/"
 county <- "Bexar"
 months <- c("april", "may", "june", "july")
 filters <- c(2,6,10)

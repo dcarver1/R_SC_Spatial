@@ -6,8 +6,12 @@
 install.packages("rmarkdown")
 library(rmarkdown)
 
-#set base directory 
-baseDir <<- "F:/geoSpatialCentroid/softwareCarpentry/intermediateGeospatialR"
+
+# input features 
+baseDir <- "F:/R_SC_Spatial/intermediateGeospatialR/"
+county <- "Bexar"
+months <- c("april", "may", "june", "july")
+filters <- c(2,6,10)
 
 #define input rmd 
 inputFile <- paste0(baseDir,"/src/countySummaries.Rmd")
@@ -16,19 +20,13 @@ inputFile <- paste0(baseDir,"/src/countySummaries.Rmd")
 
 # all datasets will be defined in the RMD as relative locations to the baseDir defined here
 
-### select county 
-county <<- 
-### select Months of interest 
-# pass a vector of numbers
-months <<- 
-### filter levels
-filters <<- c(2,6,10)
-
 # generate the file  
 rmarkdown::render(inputFile,
                   output_file=paste0("summary_",county))
+
+
 ## or itorate the process 
-counties <- c()
+counties <- c("Bexar", "Brazoria", "Harris")
 for(i in counties){
   county <<- i 
   # generate the file  
