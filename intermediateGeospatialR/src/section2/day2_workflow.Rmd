@@ -29,6 +29,7 @@ knitr::include_graphics("F:/R_SC_Spatial/intermediateGeospatialR/data/pngsForMar
   
 ```
 <br>
+
 #### Question: Could this person be affecting the monthly averages for a dark location? What if the night this image was taken was the only cloud-free capture for that month.    
 
 <details>
@@ -41,8 +42,10 @@ knitr::include_graphics("F:/R_SC_Spatial/intermediateGeospatialR/data/pngsForMar
 
 ## Where Did We Leave Off? 
 
-At the end of the last lesson, we created a correlation between yearly average radiance and poverty/age at the census tract level for three different counties in Texas. While the trends were not convincing, we assumed that the positive confirmation to our hypothesis is still out there, and by conducting a quality control check on the input data, we can pull out the truth. <br>
-#### Question: Is what we've seen so far still interesting enough to warrent continued work? 
+At the end of the last lesson, we created a correlation between yearly average radiance and poverty/age at the census tract level for three different counties in Texas. While the trends were not convincing, we assumed that the positive confirmation to our hypothesis is still out there, and by conducting a quality control check on the input data, we can pull out the truth.
+<br>
+
+#### Question: Is what we've seen so far still interesting enough to continue work? 
 <details>
   <summary>Click for an Answer</summary>
   <blockquote>
@@ -96,6 +99,7 @@ knitr::include_graphics("F:/R_SC_Spatial/intermediateGeospatialR/data/pngsForMar
 # https://www.weather-us.com/en/texas-usa/houston-climate#cloud
 ```
 <br>
+
 #### Question: Given these three observations and what you know about mathematics; what would be a reasonable minimum number of observations to use to trust a mean monthly value?  
 <details>
   <summary>Click for an Answer</summary>
