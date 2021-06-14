@@ -477,7 +477,7 @@ Let's adapt the function so that we can rework the workflow and only read in mon
 
 We wrote the first clip mask function in the script that we are using to run the code, but you can also write functions as standalone scripts and `source()` them into your code. That way, you can keep your primary work flow clean and still have your functions to rely on. So let's source this new function and take a look at it. 
 ```{r}
-source(paste0(baseDir, "/src/clipMask2.R"))
+source(paste0(baseDir, "/src/section1/clipMask2.R"))
 print(clipMask2)
 ```
 The output of this function is the same as our current, but there are three major difference. 
