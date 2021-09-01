@@ -91,7 +91,12 @@ processImagery <- function(outputLocation, images, stateFips, radiance){
 ### preps county data and census tract data within the county 
 countyName <- c("Bexar", "Brazoria","Harris")
 
-processCensus <- function(outputLocation,stateFips, countyName){
+# select poverty level 
+ct <- tidycensus::load_variables(year = 2015, dataset = "acs5")
+write.csv(ct,file = paste0(outputLocation,"/censusVariables.csv"))
+
+
+processCensus <- function(outputLocation, stateFips, countyName){
   # selects poverty and age demographics at the census track level for all
   #counties of interest within a specific state. 
   # writes out both county and census track spatial features. 
@@ -106,11 +111,8 @@ processCensus <- function(outputLocation,stateFips, countyName){
   # write out the counties for use later 
   sf::write_sf(cont[], dsn = paste0(outputLocation,"/",stateFips,"_countiesOfInterest.shp"))
   
-  # select poverty level 
-  ct <- tidycensus::load_variables(year = 2015, dataset = "acs5")
-  write.csv(ct,file = paste0(outputLocation,"/censusVariables.csv"))
   # headers within the ACS data
-  areas <- get_acs(geography = "tract",
+  areas <- tidycensus::get_acs(geography = "tract",
                    variables = c("B01002_001","B17001_002"),
                    state = state$name,
                    county = paste0(countyName," County"),
@@ -118,7 +120,7 @@ processCensus <- function(outputLocation,stateFips, countyName){
   ### B01002_001 == median age 
   ### B17001_002 == poverty
   # write out data 
-  sf::write_sf(areas, dsn = paste0paste0(outputLocation,"/poverty_age.csv"))
+  sf::write_sf(areas, dsn = paste0paste0(outputLocation,"/poverty_age.shp"))
 }
 
 

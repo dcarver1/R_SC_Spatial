@@ -20,15 +20,23 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
 <br>
 
 # What Do Nighttime Lights Tell Us About a Place?
-Nighttime lights are a uniquely human phenomenon. Every night we capture data on this form of human emissions with the Earth Observation System VIIRS. While we expect that this data will tell us a great deal about the people living and working beneath the lights, there are still many factors we need to evaluate to back up those assumptions. **In this lesson, we will be assessing how the number of observations used to generate the average monthly radiance can contribute to the month-to-month variability in the dataset**.
+
+Nighttime lights are a uniquely human phenomenon. Every night we capture data on this form of human emissions with the Earth Observation System VIIRS. While we expect that this data will tell us a great deal about the people living and working beneath the lights, there are still many factors we need to evaluate to back up those assumptions. 
+
+<center>
+**In this lesson, we will be assessing how the number of observations used to generate the average monthly radiance can contribute to the month-to-month variability in the dataset**.
+</center>
 
 <br>
+
 ```{r, echo = FALSE,  }
-knitr::include_graphics("F:/R_SC_Spatial/intermediateGeospatialR/data/pngsForMarkdown/peopleLight.jpg")
+knitr::include_graphics("E:/R_SC_Spatial/intermediateGeospatialR/data/pngsForMarkdown/peopleLight.jpg")
 #Photo by <a href="https://unsplash.com/@vingtcent?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Vincent Guth</a> on <a href="https://unsplash.com/s/photos/headlamps?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
   
 ```
+
 <br>
+
 
 #### Question: Could this person be affecting the monthly averages for a dark location? What if the night this image was taken was the only cloud-free capture for that month.    
 
@@ -38,14 +46,16 @@ knitr::include_graphics("F:/R_SC_Spatial/intermediateGeospatialR/data/pngsForMar
   It's unlikely that a headlamp would be seen from space, but we don't know that for sure. We know that the random variability that events like this represent will be more impactful when fewer observations are present. Rather than try to answer these questions, it might be better to respect that the world is complex. Any automated task (like the one we are working on) will contain conditions that you are probably unaware of and couldn't do much about, even if you did know they existed. Those assumptions, known and unknown, carry through the analysis and have the potential to skew your results in unexpected ways. Knowing that there is a lot you don't know helps you keep your mind keen for more questions rather than set on a specific answer.    
   </blockquote>
 </details> 
+
 <br>
 
-## Where Did We Leave Off? 
+## Where We Leave Off? 
 
 At the end of the last lesson, we created a correlation between yearly average radiance and poverty/age at the census tract level for three different counties in Texas. While the trends were not convincing, we assumed that the positive confirmation to our hypothesis is still out there, and by conducting a quality control check on the input data, we can pull out the truth.
 <br>
 
 #### Question: Is what we've seen so far still interesting enough to continue work? 
+
 <details>
   <summary>Click for an Answer</summary>
   <blockquote>
@@ -65,7 +75,7 @@ There are three reasons why this is worth evaluating.
 The [VIIRS sensor](https://www.jpss.noaa.gov/assets/pdfs/factsheets/viirs_factsheet.pdf) captures data in a 3,000 km swath. This means there is a lot of areas that are off-nadir captures. As night lights are generally directional features (think lights on the side of the building), the angle at which the image is captured will affect the radiance observed. This means that some nightly images will have lower or higher values than the actual observed value at nadir. We can get around this problem by working only with on nadir passes, but those images occur only every 14 days or so. That timeframe severely limits our total number of observations and would require a whole new workflow based on the daily images. The second option would be to ensure you have enough observations to average out that variability. How much is enough? We'll try to find out. 
 <br>
 ```{r, echo = FALSE}
-knitr::include_graphics("F:/R_SC_Spatial/intermediateGeospatialR/data/pngsForMarkdown/buildingLight.jpg")
+knitr::include_graphics("E:/R_SC_Spatial/intermediateGeospatialR/data/pngsForMarkdown/buildingLight.jpg")
 # Photo by <a href="https://unsplash.com/@redaska?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">steve pancrate</a> on <a href="https://unsplash.com/s/photos/building-lights?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
 
 ```
@@ -77,7 +87,7 @@ The moon is a large roundish rock that has influenced culture and inspired peopl
 <br>
 
 ```{r, echo = FALSE}
-knitr::include_graphics("F:/R_SC_Spatial/intermediateGeospatialR/data/pngsForMarkdown/moonSnow.jpg")
+knitr::include_graphics("E:/R_SC_Spatial/intermediateGeospatialR/data/pngsForMarkdown/moonSnow.jpg")
 # Photo by <a href="https://unsplash.com/@jevanleith?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Evan Leith</a> on <a href="https://unsplash.com/s/photos/moonlight?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
 
 
@@ -95,12 +105,13 @@ Low diffuse clouds and fog can diffuse the radiance and spread it out over a lar
 
 <br>
 ```{r, echo = FALSE}
-knitr::include_graphics("F:/R_SC_Spatial/intermediateGeospatialR/data/pngsForMarkdown/texasClouds.png")
+knitr::include_graphics("E:/R_SC_Spatial/intermediateGeospatialR/data/pngsForMarkdown/texasClouds.png")
 # https://www.weather-us.com/en/texas-usa/houston-climate#cloud
 ```
 <br>
 
-#### Question: Given these three observations and what you know about mathematics; what would be a reasonable minimum number of observations to use to trust a mean monthly value?  
+#### Question: Given these three observations and what you know about mathematics; what would be a reasonable minimum number of observations to use to trust a mean monthly value?
+
 <details>
   <summary>Click for an Answer</summary>
   <blockquote> 
@@ -123,7 +134,7 @@ library(dplyr)
 library(tmap)
 
 ## change this to the directory where your folder is stored 
-baseDir <- "F:/R_SC_Spatial/intermediateGeospatialR"
+baseDir <- "E:/R_SC_Spatial/intermediateGeospatialR"
 ```
 <br>
 
@@ -163,9 +174,12 @@ allImages[1:10]
 ```
 <br>
 
-It looks like the images from Bexar County start at position 5 for me. We will read that in and use it to trim out the state-wide images.
+It looks like the images from Bexar County start at position 5. 
+Read in that image and use it to crop the state wide counts data. Write out the code yourself before checking the answer
 
-<br>
+<br> 
+<detail>
+  <summary> Answer </summary>
 ```{r}
 # read in county processed image 
 r1 <- raster::raster(allImages[5])
@@ -173,10 +187,18 @@ r1 <- raster::raster(allImages[5])
 temp2 <- temp1 %>%
   raster::crop(r1)
 # pull attributes and view
-temp2
 qtm(temp2)
 ```
+</detail> 
+
 <br>
+
+This cut the area of interest down significantly. If we print the object we can see the total number of observations 
+```{r}
+temp2
+```
+
+
 We're down to ~1,600 observations, and the high end of the number of observations drops from 20 to 11. 
 
 The map shows us that majority of the area seems to be below eight observations. 
@@ -232,7 +254,7 @@ hist(vals2)
 
 Changing our area of interest did not significantly affect our summary statistics, so we are working at a scale that still captures the spatial variability of the observations. 
 
-**How Much of a County Counts as a County** 
+## How Much of a County Counts as a County
 
 Our end goal is to use the `counts` data to limit what locations are used to compute the yearly averages. By doing so, we're also limiting how much of the overall area is actually represented for a particular month. We need to balance what we keep and what we drop. We can start by seeing what proportion of the county we are reporting on if we were to filter at various levels observed in the `counts` data. 
 
