@@ -1,0 +1,4 @@
+"0","## county locations"
+"0","counties <- sf::st_read(dsn = paste0(baseDir,""/data/counties/countyTex.shp""))"
+"2","Error: Cannot open ""~/Desktop/R_SC_Spatial-master/intermediateGeospatialR/data/counties/countyTex.shp""; The file doesn't seem to exist.
+"

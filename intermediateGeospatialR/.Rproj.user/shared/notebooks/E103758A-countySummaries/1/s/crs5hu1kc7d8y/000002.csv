@@ -1,0 +1,9 @@
+"0","# use pacman to load require packages "
+"0","if (!require(""pacman"")) install.packages(""pacman"") ## important because we will be calling this script multiple times "
+"0","pacman::p_load(dplyr,raster,tmap,plotly)"
+"0","# set number of sigfigs "
+"0","options(scipen=999)"
+"0","# set tmap to interactive viewing "
+"0","tmap::tmap_mode(""view"")"
+"2","tmap mode set to interactive viewing
+"

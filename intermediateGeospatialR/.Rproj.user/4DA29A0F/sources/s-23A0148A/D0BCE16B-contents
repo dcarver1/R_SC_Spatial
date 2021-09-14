@@ -1,0 +1,104 @@
+---
+title: Intermediate Spatial Analysis in R - day 2 Section 3
+author: carverd@colostate.edu; contributors @ github (ecarcelen, habpippin)
+output:
+  html_document:
+  code_folding: hide
+highlight: tango
+theme: yeti
+toc: no
+toc_depth: 4
+toc_float:
+  collapsed: yes
+smooth_scroll: yes
+---
+
+```{r setup, echo = FALSE}
+# set some standard parameter for the documents. 
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
+```
+
+# The Goal : Call the Rmd on Multiple Counties 
+
+To render an RMD file from an R script, you can use the following function. 
+
+```{r, eval=FALSE}
+# provide a path to the file and an output location 
+rmarkdown::render(input ="3_countySummaries.Rmd",
+                  output_file = "outputs/summary_test")
+
+```
+The render function works because we have declared the objects baseDir, county, filters, and months within the RMD document itself. To run the process on a different county or at different filter levels, we would have to open that .Rmd edit those parameters, save the file, open this file back up, change the output name and call the render function again. Sounds boring right?  
+
+We can try to redefine those parameters in this script then calling the function again. 
+
+<br>
+```{r, eval=FALSE}
+# input features 
+baseDir <- "~/Desktop/R_SC_Spatial/intermediateGeospatialR"
+county <- "Harris"
+months <- c("april", "may", "june", "july")
+filters <- c(2,3,4,6,10)
+
+
+# provide a path to the file and an output location 
+rmarkdown::render(input = paste0(baseDir, "/src/section3/countySummaries.Rmd"),
+                  output_file=paste0(baseDir, "/outputs/summary_test_2"))
+```
+<br>
+
+The function runs, but the output remains the same. This is because all those parameters we define in the script were redefined when we rendered the rmd. Just like in functions, we don't want to hard code parameters we intend to change. Let's comment out that section in the RMD. 
+
+
+> **Open the file and comment out the second code block and save it**  
+
+With that edit made, we can rerun the render function saving the output under a different name to make the comparison. 
+
+<br>
+```{r, eval=FALSE}
+# input features 
+baseDir <- "F:/R_SC_Spatial/intermediateGeospatialR"
+county <- "Harris"
+months <- c("april", "may", "june", "july")
+filters <- c(2,3,4,6,10)
+
+# provide a path to the file and an output lication 
+rmarkdown::render(input = paste0(baseDir, "/src/section3/countySummaries_2.Rmd"),
+                  output_file= paste0(baseDir, "/outputs/summary_test_3"))
+```
+<br> 
+
+The output is now for Harris county, which is what we wanted to happen. The filter levels and months have changed as well. Knowing that we can redefine parameters within this script and change the output of the summary document, we will utilize a for loop to produce material for all counties of interest. 
+<br>
+```{r, eval=FALSE}
+# create a vector of county names to loop over 
+counties <- c("Bexar", "Brazoria", "Harris")
+
+for(i in counties ){
+  print(i)
+  # define the county based on place in the loop 
+  county <- i
+  # provide a path to the file and an output location
+  ## edit the output path to distinguish output based on location 
+  rmarkdown::render(input = paste0(baseDir, "/src/section3/countySummaries_2.Rmd"),
+                  output_file=ppaste0(baseDir,"/outputs/summary_test_",i))
+}
+  
+```
+<br>
+This worked as expected! We can now change input parameters and run this summary over any location. The great part about this is that we can add maps and other visualizations to the RMD document as the needs of the project change over time. Once the exploratory analysis is complete, we can use this same structure to report out final results well. 
+
+## Does Dropping Observation Based on Filter Level Affect the Correlative Relationship?  
+
+These figures show us the compromise we much decide on when applying a filter level. We gain more confidence in our data but loss some of the spatial coverage for each county. As our initial correlation work is at the census tract level, applying a filter may mean losing the ability to make statements about specific locations. We won't know how that affects the correlative relationship until we test it. If you wanted to explore this further, you could implement a specific filter in our original workflow. We would need to add the masking process we developed as part of the `radMeanAndMedian` function into code block starting on line 771 in `mainWorkflow.rmd`. This would remove locations where the monthly average was generate based on an unsatisfactory level of daily observations. 
+
+### Quick Recap and Closing Out 
+In the day 1 lesson, we processed all the data and established a method for visualizing the correlation between night lights and socioeconomic conditions. At the start of day 2, we developed a workflow that allows us to visualize the data to evaluate how filtering based on the number of monthly observations could help us remove erroneous measurements. We then created an RMD to visualize this relationship to assess the effects of various filter levels qualitatively. Finally, we use an R script to call the RMD, creating a reproducible workflow applicable across multiple areas of interest. If a pattern emerged at one of our areas of interest, there is very little stopping us from looking for that same pattern across the 3,000 or so counties in the United States. This ability to scale analysis is exciting but should be approached with caution and the assumption that a lot is going on that you may not be aware of. 
+
+We hope this lesson has inspired you to explore your applications of reproducible workflows with spatial data and, above all else, helps you do good work in the future. Please feel free to contact Dan at carverd@colostate.edu with questions, edits, or future contributions to this training series. 
+
+
+
+
+
+

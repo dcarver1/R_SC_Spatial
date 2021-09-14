@@ -1,0 +1,24 @@
+{
+    "id": "C709D29E",
+    "path": "~/Desktop/R_SC_Spatial/intermediateGeospatialR/3_countySummaries2.Rmd",
+    "project_path": "3_countySummaries2.Rmd",
+    "type": "r_markdown",
+    "hash": "4064960625",
+    "contents": "",
+    "dirty": false,
+    "created": 1631584168241.0,
+    "source_on_save": false,
+    "relative_order": 2,
+    "properties": {
+        "cursorPosition": "56,2",
+        "scrollLine": "32"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1631584447,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1631584447025,
+    "read_only": false,
+    "read_only_alternatives": []
+}

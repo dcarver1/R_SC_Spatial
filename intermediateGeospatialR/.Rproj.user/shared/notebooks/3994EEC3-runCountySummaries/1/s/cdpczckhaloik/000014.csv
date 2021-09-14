@@ -1,0 +1,5 @@
+"0","# provide a path to the file and an output location "
+"0","rmarkdown::render(input =""src/section3/countySummaries.Rmd"","
+"0","                  output_file = ""src/section3/summary_test"")"
+"2","Error: The directory 'src/section3' does not not exist.
+"

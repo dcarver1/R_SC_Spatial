@@ -1,0 +1,242 @@
+---
+title: Intermediate Spatial Analysis in R - Monthly Summaries - Day 2  Section 3
+author: carverd@colostate.edu; contributors @ github (ecarcelen, habpippin) 
+output:
+  html_document:
+  code_folding: hide
+highlight: tango
+theme: yeti
+toc: no
+toc_depth: 4
+toc_float:
+  collapsed: yes
+smooth_scroll: yes
+---
+
+ 
+### Assessment of Filter Effects
+
+This section will build an RMD document that takes the methods we developed in section 2 and puts them into a framework that will become a reproducible workflow. 
+
+At the end of this section, you will have an RMD file with flexible input paraments, so it can be called to produce maps and figures at various time frames and locations. 
+
+In the last part of this lesson, we will create an R script that will be used to iterate over multiple parameters to produce summary documents for all our counties of interest. 
+
+<br>
+```{r}
+# set some standard parameter for the documents. 
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
+```
+<br>
+
+We can set standard options for our RMD documents using the `knitr::opts_chunk$set` function. In this case, `echo = TRUE` means the code will be shown, `message=FALSE` means that internal message from functions will not print to the document, and `warning = FALSE` means that warning message will not print to the document. These settings will apply to all code blocks unless you specify differently in a block.
+More details can be found at the [rmd cheat sheet](https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf).
+
+
+<br>
+
+```{r}
+# use pacman to load require packages 
+if (!require("pacman")) install.packages("pacman") ## important because we will be calling this script multiple times 
+pacman::p_load(dplyr,raster,tmap,plotly)
+# set number of sigfigs 
+options(scipen=999)
+# set tmap to interactive viewing 
+tmap::tmap_mode("view")
+```
+<br>
+
+Load in the packages and set some specific parameters. We're using the library `pacman` to reduce the number of lines needed to load in multiple libraries. 
+
+<br>
+
+```{r}
+# input features
+county <- "Bexar"
+months <- c("april", "may", "june", "july")
+filters <- c(2,6,10)
+```
+
+We will come back to this code block through the lesson. Think about these objects as the input parameters to a function. We need to know where to look for data, what county we are interested in, what months we are evaluating, as well as what filter levels we want to apply to the data. All these parameters were pulled from the workflow we put together in `2_day2Workflow.rmd`. 
+
+<br>
+```{r}
+### grab imagery for county 
+images <- list.files(paste0("data/nightLights/", county), pattern = ".tif", full.names = TRUE)
+counts <- list.files(paste0("data/nightLights/"), pattern = "_counts.tif", full.names = TRUE)
+```
+<br>
+
+We're grabbing all the imagery associated with our areas of interest. 
+### Setting Up the Workflow 
+
+In the previous example, we just pulled a single radiance and counts image and ran something like what's listed below 
+<br>
+```{r, eval = FALSE}
+# create a dataframe to store information 
+
+# loop over all filter option 
+for(i in filter){
+  # create a mask based on the counts raster and filter 
+  # apply that mask to the radiance raster 
+  # detemine all vals excluding NAs 
+  # calculate mean, median and percent area and store in data frame
+}
+
+```
+<br>
+
+We still need to do all this, but now we have another level of complexity. We need to apply this process to all months, not just one. We will frame it out below.
+<br>
+```{r, eval =FALSE}
+
+for(m in months){
+  # call in radiance and counts imagery base on month 
+  # clip and mask the counts imagery based on radiance feature 
+  # create a dataframe to store information 
+  # loop over all filter option 
+  for(i in filter){
+    # create a mask based on the counts raster and filter 
+    # apply that mask to the radiance raster 
+    # detemine all vals excluding NAs 
+    # calculate mean, median and percent area and store in data frame
+  }
+  # Store information from dataframe in comprehesive dataframe. 
+}
+
+```
+<br>
+
+The indexing and geoprocessing within the loop of the months is nothing new. It is worth noting that we are creating a new data frame each month rather than outside of the initial loop. This is not the only way to do it, but I find it to be the easiest way. This is hard to visualize now, but I'll just say that we would need to change how we store the data we generate if we moved the data frame initialization outside the first loop. This option might be a bit slower, but at our current scale of analysis, that difference is not going to stack up that much. 
+
+We'll fill out our outline with code. 
+<br>
+```{r}
+# loop over months 
+for(i in seq_along(months)){
+  # select rasters using character match 
+  m <- months[i]
+  # grab the raster base on match in the file name 
+  r1 <- raster::raster(images[grepl(pattern = m, x = images)])
+  # create a mask object of the radience feature
+  mask <- r1 
+  mask[mask > 0] <- 1
+  mask[mask != 1] <- NA
+  # determine the total number of cells of interest by sum all values.
+  totalCells <- sum(values(mask), na.rm = TRUE) ### this works because all values are 1. 
+  # pull the correct counts feature base on character match and apply mask
+  count1 <- raster::raster(counts[grepl(pattern = m, x = counts)])*mask 
+  
+  # create df to store results 
+  df1 <- data.frame(matrix(nrow = length(filters), ncol = 5))
+  colnames(df1) <- c("month","filter","mean","median", "totalArea") 
+  df1$month <- m
+  df1$filter <- filters
+    ## loop over all seq 
+    for(j in seq_along(filters)){
+      # generate a mask with the counts image based on the seq value 
+      c2 <- count1 
+      # replace all values based on filter val
+      c2[c2 < filters[j]] <- NA 
+      # generate a mask base on new filtered data 
+      c2[!is.na(c2)]<- 1 
+      # apply that mask to radaince value 
+      r2 <- r1 * c2 
+      # calculate Mean, median of masked radiance raster 
+      vals <- raster::values(r2)
+      # drop all na values 
+      vals <- vals[!is.na(vals)]
+      # calculate values and assign features to dataframe
+      df1[j,"mean"] <- mean(vals)
+      df1[j,"median"] <- median(vals)
+      # count total obervation in mask. 
+      df1[j,"totalArea"] <- 100*(length(vals)/totalCells) 
+    }
+  # create a new dataframe object on first pass then add directly to that df on 
+  # subsequent passes 
+  if(i == 1){
+    df <- df1
+  }else{
+    df <- dplyr::bind_rows(df, df1)
+  }
+}
+df
+```
+<br>
+
+We have all our data for each month in a single data frame, and this alone shows some very telling trends. May seems to be the most affected by cloud cover, where only four percent of the county area had six or more cloud-free days. In contrast, July is a much more sunny time of the year.
+
+Much like before, gleaming these conclusions from the table is possible, but they will jump off the page if visualized well. 
+<br>
+
+## Relationship Between Number of Observations and County Level Statistics 
+
+If we plug in the data we have to our existing plot workflow, we get something strange.
+
+<br>
+```{r}
+p1 <- plot_ly() %>%
+  add_trace(x=df$filter, y=df$mean,type = 'scatter',  line = list(dash = 'dash', shape= "spline"))%>%
+  layout(xaxis = list(title = "Filter Level "),
+            yaxis = list(title = "Mean"))
+p1
+```
+<br>
+
+
+The function does not know that each month is a unique feature, so it plots the relationship observed over multiple months on a continuous line. It looks cool, but it's not informative. 
+
+To fix this, we need to bring the monthly data into the process. The can but done easily using a built parameter. 
+
+<br>
+```{r}
+p1 <- plot_ly()%>%
+  add_trace(x=df$filter, y=df$mean,type = 'scatter', color = df$month, line = list(dash = 'dash', shape= "spline"))%>%
+  layout(xaxis = list(title = "Filter Level "),
+            yaxis = list(title = "Mean"))
+p1
+```
+<br>
+
+
+This looks great. It's clear and shows the variability across the months. We can add the mean and percent area to get the full picture. 
+<br>
+```{r}
+### generate the three specific plots 
+# mean
+p1 <- plot_ly() %>%
+  add_trace(x=df$filter, y=df$mean,type = 'scatter', color = df$month, line = list(dash = 'dash', shape= "spline"))%>%
+  layout(xaxis = list(title = "Filter Level"),
+            yaxis = list(title = "Mean"))
+# median 
+p2 <- plot_ly() %>%
+    add_trace(x=df$filter, y=df$median,type = 'scatter', color = df$month, line = list(dash = 'dash', shape= "spline"),     showlegend = FALSE)%>%
+  layout(xaxis = list(title = "Filter Level"),
+         yaxis = list(title = "Median"))
+# percent area
+p3 <- plot_ly() %>%
+  add_trace(x=df$filter, y=df$totalArea,type = 'scatter', color = df$month, line = list(dash = 'dashdot', shape= "spline"),  showlegend = FALSE) %>%
+  layout(xaxis = list(title = "Filter Level"),
+         yaxis = list(title = "Percent Area"))
+### create the subplot
+p<- plotly::subplot(p1,p2,p3, nrows = 3, shareX = TRUE, titleY = TRUE)
+p 
+```
+<br>
+
+**Plot 1:** The trend of county-level mean when filtered based on the number of observations at a location 
+
+
+**Plot 2:** The trend of county-level median when filtered based on the number of observations at a location 
+
+
+**Plot 3:** The percent of the counties total area present when filtered based on the number of observations at a location 
+
+## Connecting RMD Back to R script 
+
+As we mentioned initially, this RMD can be called in a similar way as a function within an R script. All we need is a means of defining the parameters below within that R script so the code written up here can run. 
+
+**Save Your Rmd** as `countySummaries_2.Rmd`. We will be calling it directly in the next section. 
+Open up `runCountySummaries.Rmd`.
+
+

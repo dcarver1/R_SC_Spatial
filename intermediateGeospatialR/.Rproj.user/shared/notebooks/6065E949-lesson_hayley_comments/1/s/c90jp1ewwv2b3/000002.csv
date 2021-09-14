@@ -1,0 +1,7 @@
+"0","# load required libraries "
+"0","library(sf)"
+"0","library(raster)"
+"0","library(dplyr)"
+"0","library(tmap)"
+"0","## change this to where every your folder is. "
+"0","baseDir <- ""~/Desktop/R_SC_Spatial-master/intermediateGeospatialR"""
