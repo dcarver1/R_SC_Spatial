@@ -2,16 +2,16 @@
 title: "Intermediate Spatial Analysis in R - Day 1"
 author: "carverd@colostate.edu"
 output:
-  html_document: null
+  html_document: 
+    toc: true
+    toc_depth: 4
+    toc_float: true
+    collapsed: false
+    smooth_scroll: yes
   code_folding: hide
   pdf_document: default
 highlight: tango
 theme: yeti
-toc: no
-toc_depth: 4
-toc_float:
-  collapsed: yes
-smooth_scroll: yes
 ---
 ```{r setup, echo = FALSE}
 # set some standard parameter for the documents. 
@@ -52,7 +52,8 @@ In the example provided in the `describeVIIRSData.html`, we can see that the dis
 The Lux, or Sky Beam, on top of the Luxor Hotel in Vegas is the brightest object on earth at 42.3 billions candela. This beam is produced by 39,7000 watt lamps. When all lamps are operating, the interior temperature of the room in which they are contained raises to approximately 300 degrees Fahrenheit. 
 
 ```{r, echo = FALSE}
-knitr::include_graphics("data/pngsForMarkdown/light.jpg")
+wd <- getwd()
+knitr::include_graphics(paste0(wd,"/intermediateGeospatialR/data/pngsForMarkdown/light.jpg"))
 #[By InSapphoWeTrust from Los Angeles, California, USA - Light beam, Luxor, Las Vegas, CC BY-SA 2.0, https://commons.wikimedia.org/w/index.php?curid=24267782.]
 ```
 
@@ -101,7 +102,7 @@ library(dplyr)
 library(tmap)
 ```
 
-Since this lesson is in an RProject, your working directory should be automatically set to the correct path. Double check that it is set to something that looks like: `~/Desktop/R_SC_Spatial/intermediateGeospatialR/`
+Since this lesson is in an RProject, your working directory should be automatically set to the correct path. Double check that it is set to something that looks like: `~/Desktop/R_SC_Spatial/`
 
 ### Check in: Are all the libraries loaded? 
 
@@ -129,7 +130,7 @@ We will pull our full list of images using the `list.files()` function. This fun
 
 ```{r}
 # night light imagery 
-images <- list.files(path = "data/nightLights",
+images <- list.files(path = "intermediateGeospatialR/data/nightLights",
                        pattern = ".tif", 
                        full.names = TRUE)
 ```
@@ -179,7 +180,7 @@ The county data has been prepped for us so we can just read it in by pointing to
 
 ```{r}
 ## county locations
-counties <- sf::st_read(dsn = "data/counties/countyTex.shp",quiet =TRUE)
+counties <- sf::st_read(dsn = "intermediateGeospatialR/data/counties/countyTex.shp",quiet =TRUE)
 # head(counties)
 ```
 
@@ -197,7 +198,7 @@ Much like the county data, we can just read this information in directly.
 
 ```{r}
 ## census tract data 
-censusT <- sf::st_read(dsn = "data/census/ageAndPoverty.shp", quiet =TRUE)
+censusT <- sf::st_read(dsn = "intermediateGeospatialR/data/census/ageAndPoverty.shp", quiet =TRUE)
 # head(censusT)
 ```
 
@@ -459,8 +460,8 @@ i <- 1
 j <- 1
 ###
 # now we can run this without the loop structure. 
-# I typilcally do this by running single lines at a time but here we are just 
-# commneting out sections of the process we don't want to run 
+# I typically do this by running single lines at a time but here we are just 
+# commenting out sections of the process we don't want to run 
 #for(i in seq_along(counties$STATEFP)){
   c1 <- counties[i,] # select a specific county 
 #  for(j in seq_along(images)){
@@ -538,7 +539,7 @@ for(i in seq_along(counties$STATEFP)){
     ## save the processed image 
     countyName <- as.character(c1$NAME) # define county name
     rasterName <- names(r2) # define raster name
-    file <- paste0("data/nightLights/",countyName, "/",rasterName,".tif") # concatenate features to create a path
+    file <- paste0("intermediateGeospatialR/data/nightLights/",countyName, "/",rasterName,".tif") # concatenate features to create a path
     raster::writeRaster(x = r2 , 
                         filename = file,
                         overwrite = TRUE)
@@ -564,7 +565,7 @@ Let's adapt the function so that we can rework the workflow and only read in mon
 
 We wrote the first clip mask function in the script that we are using to run the code, but you can also write functions as standalone scripts and `source()` them into your code. That way, you can keep your primary work flow clean and still have your functions to rely on. So let's source this new function and take a look at it. 
 ```{r}
-source("src/section1/clipMask2.R")
+source("intermediateGeospatialR/src/section1/clipMask2.R")
 print(clipMask2)
 ```
 The output of this function is the same as our current, but there are three major difference. 
@@ -637,7 +638,7 @@ for(i in seq_along(images)){
     nameC <- as.character(c1$NAME) 
     r2 <- clipMask2(raster = r1, extent = c1)
     ### we've already writen this content out so we don't need to repeat the process. 
-    # raster::writeRaster(x = r2,filename = paste0(baseDir, "/data/nightLights/", nameC,"/",nameR,".tif"))
+    # raster::writeRaster(x = r2,filename = paste0"intermediateGeospatialR/data/nightLights/", nameC,"/",nameR,".tif"))
   }
 }
 
@@ -689,7 +690,7 @@ Both options get you to the same place. I tend to use base R when only a single 
 </details>
 
 
-**Connect both variable in simplified structure**
+**Connect Both Variables in Simplified Structure**
 
 The GEOID, NAME, and geometry will be the same for each census tract. Since we've already got that stored we need to remove those columns from the rows associated with our second census variable. We will do this using dplyr. 
 
@@ -719,13 +720,13 @@ qtm(censusData[1:10,])
 
 When we call `qtm` on these features, it is important to select a subset of the full dataset, particularly with complex polygon features. Mapping all those point relationships can take some time.
 
-## Associate Nightly Radiance with each Census Tract 
+## Associate Nightly Radiance with Each Census Tract 
 
 Our goal is to end up with a single measure of radiance per census tract per month. This will require some iterate processes, so just like before when we were developing the method for processing the rasters, we will basically create a test set and make sure we get our methodology set before thinking about how to iterate the workflow. 
 
 ```{r}
 ## create a subset to test the process. 
-r1 <- raster::raster("data/nightLights/Harris/june_10arc.tif")
+r1 <- raster::raster("intermediateGeospatialR/data/nightLights/Harris/june_10arc.tif")
 head(censusData) # check for harris county locations 
 # pull a subset 
 t2 <- censusData[2:4,]
@@ -827,7 +828,7 @@ for(i in seq_along(counties$STATEFP)){
   
   # construct a file directory to show where to look for specific county images 
   cName <- as.character(counties$NAME[i])
-  dir <- paste0("data/nightLights/",cName)
+  dir <- paste0("intermediateGeospatialR/data/nightLights/",cName)
   
   ## pull all rasters from a county of interest 
   rasters <- list.files(path = dir, pattern = ".tif", full.names = TRUE)
@@ -874,7 +875,7 @@ for(i in seq_along(counties$STATEFP)){
   
   # construct a file directory to show where to look for specific county images 
   cName <- as.character(counties$NAME[i])
-  dir <- paste0("data/nightLights/",cName)
+  dir <- paste0("intermediateGeospatialR/data/nightLights/",cName)
   
   ## pull all rasters from a county of interest 
   rasters <- list.files(path = dir,pattern = ".tif", full.names = TRUE)
@@ -900,14 +901,14 @@ While the computer is busy working for you, you can continue procrastinating ema
 
 
 
-## Are night lights and social ecomonic values correlated?
+## Are Night Lights and Social Ecomonic Values Correlated?
 
 Now to start getting at the question we were initially interested in. 
 As this dataset did take a bit of time to put together, we can write out the feature to ensure we maintain it. 
 
 ```{r, eval=FALSE}
 # you can write this out if you want, but I'm not going to yet
-sf::write_sf("outputs/censusNightLightRadiance.shp")
+sf::write_sf("intermediateGeospatialR/outputs/censusNightLightRadiance.shp")
 ```
 
 **Evaluating the Average Yearly Radiance** 

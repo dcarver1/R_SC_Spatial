@@ -2,15 +2,16 @@
 title: Intermediate Spatial Analysis in R - Day 2 - section 2
 author: carverd@colostate.edu; contributors @ github (ecarcelen, habpippin)
 output:
-  html_document:
+  html_document: 
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    collapsed: false
+    smooth_scroll: yes
   code_folding: hide
+  pdf_document: default
 highlight: tango
 theme: yeti
-toc: no
-toc_depth: 4
-toc_float:
-  collapsed: yes
-smooth_scroll: yes
 ---
 
 ```{r setup, echo = FALSE}
@@ -30,7 +31,8 @@ Nighttime lights are a uniquely human phenomenon. Every night we capture data on
 <br>
 
 ```{r, echo = FALSE,  }
-knitr::include_graphics("data/pngsForMarkdown/peopleLight.jpg")
+wd <- getwd()
+knitr::include_graphics(paste0(wd, "/intermediateGeospatialR/data/pngsForMarkdown/peopleLight.jpg"))
 #Photo by <a href="https://unsplash.com/@vingtcent?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Vincent Guth</a> on <a href="https://unsplash.com/s/photos/headlamps?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
   
 ```
@@ -49,7 +51,7 @@ knitr::include_graphics("data/pngsForMarkdown/peopleLight.jpg")
 
 <br>
 
-## Where We Leave Off? 
+## Where Did We Leave Off? 
 
 At the end of the last lesson, we created a correlation between yearly average radiance and poverty/age at the census tract level for three different counties in Texas. While the trends were not convincing, we assumed that the positive confirmation to our hypothesis is still out there, and by conducting a quality control check on the input data, we can pull out the truth.
 <br>
@@ -75,7 +77,7 @@ There are three reasons why this is worth evaluating.
 The [VIIRS sensor](https://www.jpss.noaa.gov/assets/pdfs/factsheets/viirs_factsheet.pdf) captures data in a 3,000 km swath. This means there is a lot of areas that are off-nadir captures. As night lights are generally directional features (think lights on the side of the building), the angle at which the image is captured will affect the radiance observed. This means that some nightly images will have lower or higher values than the actual observed value at nadir. We can get around this problem by working only with on nadir passes, but those images occur only every 14 days or so. That timeframe severely limits our total number of observations and would require a whole new workflow based on the daily images. The second option would be to ensure you have enough observations to average out that variability. How much is enough? We'll try to find out. 
 <br>
 ```{r, echo = FALSE}
-knitr::include_graphics("data/pngsForMarkdown/buildingLight.jpg")
+knitr::include_graphics(paste0(wd, "/intermediateGeospatialR/data/pngsForMarkdown/buildingLight.jpg"))
 # Photo by <a href="https://unsplash.com/@redaska?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">steve pancrate</a> on <a href="https://unsplash.com/s/photos/building-lights?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
 
 ```
@@ -87,7 +89,7 @@ The moon is a large roundish rock that has influenced culture and inspired peopl
 <br>
 
 ```{r, echo = FALSE}
-knitr::include_graphics("data/pngsForMarkdown/moonSnow.jpg")
+knitr::include_graphics(paste0(wd, "/intermediateGeospatialR/data/pngsForMarkdown/moonSnow.jpg"))
 # Photo by <a href="https://unsplash.com/@jevanleith?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Evan Leith</a> on <a href="https://unsplash.com/s/photos/moonlight?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText">Unsplash</a>
 
 
@@ -105,7 +107,7 @@ Low diffuse clouds and fog can diffuse the radiance and spread it out over a lar
 
 <br>
 ```{r, echo = FALSE}
-knitr::include_graphics("data/pngsForMarkdown/texasClouds.png")
+knitr::include_graphics(paste0(wd, "/intermediateGeospatialR/data/pngsForMarkdown/texasClouds.png"))
 # https://www.weather-us.com/en/texas-usa/houston-climate#cloud
 ```
 <br>
@@ -141,7 +143,7 @@ Now we will pull the `counts` files.
 <br>
 ```{r}
 # grab all counts images
-images <- list.files(path = "data/nightLights",
+images <- list.files(path = "intermediateGeospatialR/data/nightLights",
                      pattern = "_counts.tif", 
                      full.names = TRUE)
 images
@@ -162,7 +164,7 @@ There are over 500,000 observations in the image, and the values range from 2 to
 <br>
 ```{r}
 # grab a radiance image
-allImages <- list.files(path = "data/nightLights",
+allImages <- list.files(path = "intermediateGeospatialR/data/nightLights",
                      pattern = ".tif", 
                      full.names = TRUE, 
                      recursive = TRUE)
@@ -516,6 +518,6 @@ At this point, we have a process developed for generating a data-rich visualizat
 
 We could structure this out within a series of loops, but evaluating the result at the county level is probably more appropriate. It's a concrete spatial scale that much of our current analysis is built on. As the results we want to show gain utility from interactivity, we can produce them via an .rmd to HTML rather than an R script. A bonus of the rmd process is that we can call the document directly from an R script in a similar way we call in a function. This is a lot to try to visualize, so let's jump into it and discuss the details as we move through section 3 material. 
 
-Open a new RMD script and the `countySummaries.html` from the src/section3 folder.  
+Open a new RMD script and the `3_countySummaries.html` from the `intermediateGeospatialR` folder.  
 
 

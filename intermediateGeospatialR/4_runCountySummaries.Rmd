@@ -2,15 +2,16 @@
 title: Intermediate Spatial Analysis in R - day 2 Section 3
 author: carverd@colostate.edu; contributors @ github (ecarcelen, habpippin)
 output:
-  html_document:
+  html_document: 
+    toc: true
+    toc_depth: 4
+    toc_float: true
+    collapsed: false
+    smooth_scroll: yes
   code_folding: hide
+  pdf_document: default
 highlight: tango
 theme: yeti
-toc: no
-toc_depth: 4
-toc_float:
-  collapsed: yes
-smooth_scroll: yes
 ---
 
 ```{r setup, echo = FALSE}
@@ -18,14 +19,14 @@ smooth_scroll: yes
 knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
 ```
 
-# The Goal : Call the Rmd on Multiple Counties 
+## The Goal: Call the Rmd on Multiple Counties 
 
 To render an RMD file from an R script, you can use the following function. 
 
 ```{r, eval=FALSE}
 # provide a path to the file and an output location 
-rmarkdown::render(input ="3_countySummaries.Rmd",
-                  output_file = "outputs/summary_test")
+rmarkdown::render(input ="intermediateGeospatialR/3_countySummaries.Rmd",
+                  output_file = "intermediateGeospatialR/outputs/summary_test")
 ```
 The render function works because we have declared the objects baseDir, county, filters, and months within the RMD document itself. To run the process on a different county or at different filter levels, we would have to open that .Rmd edit those parameters, save the file, open this file back up, change the output name and call the render function again. Sounds boring right?  
 
@@ -34,15 +35,13 @@ We can try to redefine those parameters in this script then calling the function
 <br>
 ```{r, eval=FALSE}
 # input features 
-#baseDir <- "~/Desktop/R_SC_Spatial/intermediateGeospatialR"
 county <- "Harris"
 months <- c("april", "may", "june", "july")
 filters <- c(2,3,4,6,10)
 
-
 # provide a path to the file and an output location 
-rmarkdown::render(input = "3_countySummaries2.Rmd",
-                  output_file = "outputs/summary_test_2")
+rmarkdown::render(input = "intermediateGeospatialR/3_countySummaries2.Rmd",
+                  output_file = "intermediateGeospatialR/outputs/summary_test_2")
 ```
 <br>
 
@@ -61,8 +60,8 @@ months <- c("april", "may", "june", "july")
 filters <- c(2,3,4,6,10)
 
 # provide a path to the file and an output lication 
-rmarkdown::render(input = "3_countySummaries2.Rmd",
-                  output_file = "outputs/summary_test_3")
+rmarkdown::render(input = "intermediateGeospatialR/3_countySummaries2.Rmd",
+                  output_file = "intermediateGeospatialR/outputs/summary_test_3")
 ```
 <br> 
 
@@ -78,15 +77,15 @@ for(i in counties ){
   county <- i
   # provide a path to the file and an output location
   ## edit the output path to distinguish output based on location 
-  rmarkdown::render(input = "3_countySummaries2.Rmd",
-                  output_file = paste0("outputs/summary_test_",i))
+  rmarkdown::render(input = "intermediateGeospatialR/3_countySummaries2.Rmd",
+                  output_file = paste0("intermediateGeospatialR/outputs/summary_test_",i))
 }
   
 ```
 <br>
 This worked as expected! We can now change input parameters and run this summary over any location. The great part about this is that we can add maps and other visualizations to the RMD document as the needs of the project change over time. Once the exploratory analysis is complete, we can use this same structure to report out final results well. 
 
-## Does Dropping Observation Based on Filter Level Affect the Correlative Relationship?  
+### Does Dropping Observation Based on Filter Level Affect the Correlative Relationship?  
 
 These figures show us the compromise we must decide on when applying a filter level. We gain more confidence in our data, but lose some of the spatial coverage for each county. As our initial correlation work is at the census tract level, applying a filter may mean losing the ability to make statements about specific locations. We won't know how that affects the correlative relationship until we test it. If you wanted to explore this further, you could implement a specific filter in our original workflow. We would need to add the masking process we developed as part of the `radMeanAndMedian` function into code block starting on line 771 in `mainWorkflow.rmd`. This would remove locations where the monthly average was generate based on an unsatisfactory level of daily observations. 
 

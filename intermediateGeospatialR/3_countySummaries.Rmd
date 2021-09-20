@@ -2,15 +2,16 @@
 title: Intermediate Spatial Analysis in R - Monthly Summaries - Day 2  Section 3
 author: carverd@colostate.edu; contributors @ github (ecarcelen, habpippin) 
 output:
-  html_document:
-  code_folding: hide
+  html_document: 
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    collapsed: false
+    smooth_scroll: yes
+code_folding: hide
+pdf_document: default
 highlight: tango
 theme: yeti
-toc: no
-toc_depth: 4
-toc_float:
-  collapsed: yes
-smooth_scroll: yes
 ---
 
  
@@ -62,8 +63,8 @@ We will come back to this code block through the lesson. Think about these objec
 <br>
 ```{r}
 ### grab imagery for county 
-images <- list.files(paste0("data/nightLights/", county), pattern = ".tif", full.names = TRUE)
-counts <- list.files(paste0("data/nightLights/"), pattern = "_counts.tif", full.names = TRUE)
+images <- list.files(paste0("intermediateGeospatialR/data/nightLights/", county), pattern = ".tif", full.names = TRUE)
+counts <- list.files(paste0("intermediateGeospatialR/data/nightLights/"), pattern = "_counts.tif", full.names = TRUE)
 ```
 <br>
 
@@ -169,7 +170,7 @@ We have all our data for each month in a single data frame, and this alone shows
 Much like before, gleaming these conclusions from the table is possible, but they will jump off the page if visualized well. 
 <br>
 
-## Relationship Between Number of Observations and County Level Statistics 
+### Relationship Between Number of Observations and County Level Statistics 
 
 If we plug in the data we have to our existing plot workflow, we get something strange.
 
@@ -232,11 +233,11 @@ p
 
 **Plot 3:** The percent of the counties total area present when filtered based on the number of observations at a location 
 
-## Connecting RMD Back to R script 
+### Connecting RMD Back to R script 
 
 As we mentioned initially, this RMD can be called in a similar way as a function within an R script. All we need is a means of defining the parameters below within that R script so the code written up here can run. 
 
-**Save Your Rmd** as `3_countySummaries_2.Rmd`. We will be calling it directly in the next section. 
-Open up `4_runCountySummaries.Rmd`.
+**Save Your Rmd** as `3_countySummaries2.Rmd`. We will be calling it directly in the next section. 
+Open up `4_runCountySummaries.html`.
 
 
