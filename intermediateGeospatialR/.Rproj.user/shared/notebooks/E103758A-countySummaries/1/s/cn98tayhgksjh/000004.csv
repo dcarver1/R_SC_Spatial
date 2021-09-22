@@ -1,0 +1,21 @@
+"0","p1 <- plot_ly() %>%"
+"0","  add_trace(x=df$filter, y=df$mean,type = 'scatter',  line = list(dash = 'dash', shape= ""spline""))%>%"
+"0","  layout(xaxis = list(title = ""Filter Level ""),"
+"0","            yaxis = list(title = ""Mean""))"
+"0","p1"
+"2","No scatter mode specifed:
+  Setting the mode to markers
+  Read more about this attribute -> https://plotly.com/r/reference/#scatter-mode
+"
+"2","Ignoring 1 observations"
+"2","A line object has been specified, but lines is not in the mode
+Adding lines to the mode...
+"
+"2","No scatter mode specifed:
+  Setting the mode to markers
+  Read more about this attribute -> https://plotly.com/r/reference/#scatter-mode
+"
+"2","Ignoring 1 observations"
+"2","A line object has been specified, but lines is not in the mode
+Adding lines to the mode...
+"

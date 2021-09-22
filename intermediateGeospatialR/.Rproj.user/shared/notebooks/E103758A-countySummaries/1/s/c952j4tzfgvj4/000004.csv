@@ -1,0 +1,69 @@
+"0","### generate the three specific plots "
+"0","# mean"
+"0","p1 <- plot_ly() %>%"
+"0","  add_trace(x=df$filter, y=df$mean,type = 'scatter', color = df$month, line = list(dash = 'dash', shape= ""spline""))%>%"
+"0","  layout(xaxis = list(title = ""Filter Level""),"
+"0","            yaxis = list(title = ""Mean""))"
+"0","# median "
+"0","p2 <- plot_ly() %>%"
+"0","    add_trace(x=df$filter, y=df$median,type = 'scatter', color = df$month, line = list(dash = 'dash', shape= ""spline""),     showlegend = FALSE)%>%"
+"0","  layout(xaxis = list(title = ""Filter Level""),"
+"0","         yaxis = list(title = ""Median""))"
+"0","# percent area"
+"0","p3 <- plot_ly() %>%"
+"0","  add_trace(x=df$filter, y=df$totalArea,type = 'scatter', color = df$month, line = list(dash = 'dashdot', shape= ""spline""),  showlegend = FALSE) %>%"
+"0","  layout(xaxis = list(title = ""Filter Level""),"
+"0","         yaxis = list(title = ""Percent Area""))"
+"0","### create the subplot"
+"0","p<- plotly::subplot(p1,p2,p3, nrows = 3, shareX = TRUE, titleY = TRUE)"
+"2","No scatter mode specifed:
+  Setting the mode to markers
+  Read more about this attribute -> https://plotly.com/r/reference/#scatter-mode
+"
+"2","Ignoring 1 observations"
+"2","A line object has been specified, but lines is not in the mode
+Adding lines to the mode...
+"
+"2","A line object has been specified, but lines is not in the mode
+Adding lines to the mode...
+"
+"2","A line object has been specified, but lines is not in the mode
+Adding lines to the mode...
+"
+"2","A line object has been specified, but lines is not in the mode
+Adding lines to the mode...
+"
+"2","No scatter mode specifed:
+  Setting the mode to markers
+  Read more about this attribute -> https://plotly.com/r/reference/#scatter-mode
+"
+"2","Ignoring 1 observations"
+"2","A line object has been specified, but lines is not in the mode
+Adding lines to the mode...
+"
+"2","A line object has been specified, but lines is not in the mode
+Adding lines to the mode...
+"
+"2","A line object has been specified, but lines is not in the mode
+Adding lines to the mode...
+"
+"2","A line object has been specified, but lines is not in the mode
+Adding lines to the mode...
+"
+"2","No scatter mode specifed:
+  Setting the mode to markers
+  Read more about this attribute -> https://plotly.com/r/reference/#scatter-mode
+"
+"2","A line object has been specified, but lines is not in the mode
+Adding lines to the mode...
+"
+"2","A line object has been specified, but lines is not in the mode
+Adding lines to the mode...
+"
+"2","A line object has been specified, but lines is not in the mode
+Adding lines to the mode...
+"
+"2","A line object has been specified, but lines is not in the mode
+Adding lines to the mode...
+"
+"0","p "

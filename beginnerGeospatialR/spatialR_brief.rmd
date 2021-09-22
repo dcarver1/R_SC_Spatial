@@ -20,10 +20,10 @@ The programming language R has been in active development since 1995. While init
 - produce interactive maps
 <br>
 
-## How to
-This tutorial is meant to be self-paced. To follow along you will need to download the example material form the [Github](https://github.com/GeospatialCentroid/Research-and-Program-Coordinator)
+## How To
+This tutorial is meant to be self-paced. To follow along you will need to download the example material from the [Github](https://github.com/GeospatialCentroid/Research-and-Program-Coordinator).
 
-This folder contains a protected areas raster, based on the [Protected Planet](https://www.protectedplanet.net/) world database of protected areas, and a csv of occurrence data of [wild squash data](https://nph.onlinelibrary.wiley.com/doi/full/10.1002/ppp3.10085)
+This folder contains a protected areas raster, based on the [Protected Planet](https://www.protectedplanet.net/) world database of protected areas, and a csv of occurrence data of [wild squash data](https://nph.onlinelibrary.wiley.com/doi/full/10.1002/ppp3.10085).
 
 Unzip the folder and store it in a convenient location for you.
 <br>
@@ -86,27 +86,17 @@ library(sp)
 We will rely on the raster library to bring in our first bit of spatial data.
 <br>
 
-```{r eval = TRUE, warning = FALSE}
-# set base directory, which defines where your files are stored/written
-baseDir <- "D:/geoSpatialCentroid/Research-and-Program-Coordinator" # this will be unique to your computer
-```
-<br>
+Check to make sure that you are in the correct working directory, which defines where your files are stored/written. It should look something like `~/Desktop/R_SC_Spatial/`. 
+
+Since the lesson is written in an R Project, your working directory should automatically be set to the correct place. R Projects are great, because you can write your script using relative paths and know that the script will work on anyone's computer, because your files are contained within the project. It's like the equivalent of using `setwd()` without having to run `setwd()`. (Read more about that below.)
 
 >**what about setwd()?**  When you set the working directly; you are declaring a relative path from where R studio will look for all files which is  helpful because you can then point to files using r`file <- read.csv("~/example.csv")`. This is very efficient if all your data and outputs are stored within the folder you set as your working directory. So if you want to use setwd() please go ahead.
-While it require more text, we recommend trying the method as written for three reasons.
-1. It is explicit in that it always lists the full path.
-2. You can easily add other directors, r`outputs <- "F:/outputFolder"` and use the same structure.
-These are minor things that help ensure your workflow is reproducible.
-3. setwd() applies to all scripts in your editor. If your reading and write files from different locations having to reset the working directory can become cumbersome and lead to errors.
-These are minor things that help ensure your workflow is reproducible. It is by no means a requirement.
-
-
 
 <br>
 
 ```{r eval = TRUE, warning = FALSE}
 # read in the file
-proLands <- raster::raster(x = paste0(baseDir,"/proAreas.tif"))
+proLands <- raster::raster(x = "beginnerGeospatialR/proAreas.tif")
 
 ### Example with setwd()
 # setwd("F:/temp") # this will be unique to your computer
@@ -143,13 +133,13 @@ While this is a spatial file, R is plotting it as it were numeric data. It is si
 
 
 
-### Generate Spatial Data from a csv
+### Generate Spatial Data from a CSV
 <br>
 
 ```{r eval = TRUE, warning = FALSE}
 
 # read in the data
-d1 <- read.csv(paste0(baseDir,"/cucurbitaData.csv"))
+d1 <- read.csv("beginnerGeospatialR/cucurbitaData.csv")
 str(d1)
 ```
 <br>
@@ -256,7 +246,7 @@ raster::compareCRS(x = proLands, y = sp1)
 As the extents are different, it's worth while to clip the bigger dataset to improve processing time and keep a clean study area.  
 <br>
 
-### Crop the data
+### Crop the Data
 
 <br>
 ```{r  warning = FALSE}
@@ -278,7 +268,7 @@ The extent has shrunk quite a bit. Now that we know the datasets match spatially
 
 <br>`
 
-### Extracting values to points
+### Extracting Values to Points
 
 <br>
 
@@ -303,7 +293,7 @@ head(sp1@data)
 With the result recorded in the point data we can visualize the values on a map.
 <br>
 
-### Map the data
+### Map the Data
 <br>
 
 We will start by visualizing the occurrence data on an interactive map using the library tmap.
@@ -347,7 +337,7 @@ While visualizing this information in RStudio is great, it is also helpful to ha
 <br>
 
 ```{r eval = FALSE, warning = FALSE}
-tmap::tmap_save(tm = map2, filename = paste0(baseDir,"/map.png"))
+tmap::tmap_save(tm = map2, filename = "beginnerGeospatialR/map.png")
 ```
 <br>
 

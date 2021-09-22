@@ -1,0 +1,6 @@
+"0","## night light imagery "
+"0","images <- list.files(path = paste0(baseDir, ""/data/nightLights""),"
+"0","                     pattern = "".tif"", "
+"0","                     full.names = TRUE)"
+"0","# summary(images)"
+"0",""

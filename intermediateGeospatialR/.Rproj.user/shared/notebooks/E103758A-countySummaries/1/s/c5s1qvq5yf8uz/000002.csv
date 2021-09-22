@@ -1,0 +1,11 @@
+"0","# create a dataframe to store information "
+"0",""
+"0","# loop over all filter option "
+"0","for(i in filter){"
+"0","  # create a mask based on the counts raster and filter "
+"0","  # apply that mask to the radiance raster "
+"0","  # detemine all vals excluding NAs "
+"0","  # calculate mean, median and percent area and store in data frame"
+"0","}"
+"2","Error in for (i in filter) { : invalid for() loop sequence
+"

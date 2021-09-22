@@ -1,0 +1,3 @@
+"0","### grab imagery for county "
+"0","images <- list.files(paste0(""data/nightLights/"", county), pattern = "".tif"", full.names = TRUE)"
+"0","counts <- list.files(paste0(""data/nightLights/""), pattern = ""_counts.tif"", full.names = TRUE)"
