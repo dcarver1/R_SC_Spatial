@@ -5,7 +5,7 @@
 ### 
 
 
-# code take from https://rpubs.com/ccmothes/ColoradoSpecies
+# code taken from https://rpubs.com/ccmothes/ColoradoSpecies
 packageLoad <-
   function(x) {
     for (i in 1:length(x)) {
