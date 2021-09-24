@@ -20,6 +20,6 @@ questions :: post issue here or email at dan.carver@carverd.com
   - r markdown
   - change "evaluate chucks in directory"  : project. 
 
-- to rendered rmd from 4_runCountySummaries.Rmd 
+  - to rendered rmd from 4_runCountySummaries.Rmd 
 - change  "evaluate chucks in directory"  : document. 
 
