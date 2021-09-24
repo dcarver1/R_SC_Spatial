@@ -24,7 +24,7 @@ At the end of this section, you will have an RMD file with flexible input parame
 In the last part of this lesson, we will create an R script that will be used to iterate over multiple parameters to produce summary documents for all our counties of interest. 
 
 <br>
-```{r}
+```{r setup}
 # set some standard parameter for the documents. 
 knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
 ```
@@ -36,7 +36,7 @@ More details can be found at the [rmd cheat sheet](https://www.rstudio.com/wp-co
 
 <br>
 
-```{r}
+```{r block1}
 # use pacman to load require packages 
 if (!require("pacman")) install.packages("pacman") ## important because we will be calling this script multiple times 
 pacman::p_load(dplyr,raster,tmap,plotly)
@@ -51,7 +51,7 @@ Load in the packages and set some specific parameters. We're using the library `
 
 <br>
 
-```{r}
+```{r block2}
 # input features
 county <- "Bexar"
 months <- c("april", "may", "june", "july")
@@ -61,7 +61,7 @@ filters <- c(2,6,10)
 We will come back to this code block through the lesson. Think about these objects as the input parameters to a function. We need to know where to look for data, what county we are interested in, what months we are evaluating, as well as what filter levels we want to apply to the data. All these parameters were pulled from the workflow we put together in `2_day2Workflow.rmd`. 
 
 <br>
-```{r}
+```{r block3}
 ### grab imagery for county 
 images <- list.files(paste0("intermediateGeospatialR/data/nightLights/", county), pattern = ".tif", full.names = TRUE)
 counts <- list.files(paste0("intermediateGeospatialR/data/nightLights/"), pattern = "_counts.tif", full.names = TRUE)
@@ -73,7 +73,7 @@ We're grabbing all the imagery associated with our areas of interest.
 
 In the previous example, we just pulled a single radiance and counts image and ran something like what's listed below 
 <br>
-```{r, eval = FALSE}
+```{r block4, eval = FALSE}
 # create a dataframe to store information 
 
 # loop over all filter option 
@@ -89,7 +89,7 @@ for(i in filter){
 
 We still need to do all this, but now we have another level of complexity. We need to apply this process to all months, not just one. We will frame it out below.
 <br>
-```{r, eval =FALSE}
+```{r block5, eval =FALSE}
 
 for(m in months){
   # call in radiance and counts imagery base on month 
@@ -112,7 +112,7 @@ The indexing and geoprocessing within the loop of the months is nothing new. It 
 
 We'll fill out our outline with code. 
 <br>
-```{r}
+```{r block6}
 # loop over months 
 for(i in seq_along(months)){
   # select rasters using character match 
@@ -175,7 +175,7 @@ Much like before, gleaming these conclusions from the table is possible, but the
 If we plug in the data we have to our existing plot workflow, we get something strange.
 
 <br>
-```{r}
+```{r block7}
 p1 <- plot_ly() %>%
   add_trace(x=df$filter, y=df$mean,type = 'scatter',  line = list(dash = 'dash', shape= "spline"))%>%
   layout(xaxis = list(title = "Filter Level "),
@@ -190,7 +190,7 @@ The function does not know that each month is a unique feature, so it plots the 
 To fix this, we need to bring the monthly data into the process. The can but done easily using a built parameter. 
 
 <br>
-```{r}
+```{r block8}
 p1 <- plot_ly()%>%
   add_trace(x=df$filter, y=df$mean,type = 'scatter', color = df$month, line = list(dash = 'dash', shape= "spline"))%>%
   layout(xaxis = list(title = "Filter Level "),
@@ -202,7 +202,7 @@ p1
 
 This looks great. It's clear and shows the variability across the months. We can add the mean and percent area to get the full picture. 
 <br>
-```{r}
+```{r block9}
 ### generate the three specific plots 
 # mean
 p1 <- plot_ly() %>%

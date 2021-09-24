@@ -23,17 +23,17 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
 
 To render an RMD file from an R script, you can use the following function. 
 
-```{r, eval=FALSE}
+```{r block1, eval=FALSE }
 # provide a path to the file and an output location 
-rmarkdown::render(input ="intermediateGeospatialR/3_countySummaries.Rmd",
-                  output_file = "intermediateGeospatialR/outputs/summary_test")
+rmarkdown::render(input ="3_countySummaries2.Rmd",
+                  output_file = "outputs/summary_test")
 ```
-The render function works because we have declared the objects baseDir, county, filters, and months within the RMD document itself. To run the process on a different county or at different filter levels, we would have to open that .Rmd edit those parameters, save the file, open this file back up, change the output name and call the render function again. Sounds boring right?  
+The render function works because we have declared the objects county, filters, and months within the RMD document itself. To run the process on a different county or at different filter levels, we would have to open that .Rmd edit those parameters, save the file, open this file back up, change the output name and call the render function again. Sounds boring right?  
 
 We can try to redefine those parameters in this script then calling the function again. 
 
 <br>
-```{r, eval=FALSE}
+```{r block2, eval=FALSE}
 # input features 
 county <- "Harris"
 months <- c("april", "may", "june", "july")
@@ -41,7 +41,8 @@ filters <- c(2,3,4,6,10)
 
 # provide a path to the file and an output location 
 rmarkdown::render(input = "intermediateGeospatialR/3_countySummaries2.Rmd",
-                  output_file = "intermediateGeospatialR/outputs/summary_test_2")
+                  output_file = ~"intermediateGeospatialR/outputs/summary_test_2")
+
 ```
 <br>
 
@@ -53,21 +54,21 @@ The function runs, but the output remains the same. This is because all those pa
 With that edit made, we can rerun the render function saving the output under a different name to make the comparison. 
 
 <br>
-```{r, eval=FALSE}
+```{r block3, eval=FALSE}
 # input features 
 county <- "Harris"
 months <- c("april", "may", "june", "july")
 filters <- c(2,3,4,6,10)
 
 # provide a path to the file and an output lication 
-rmarkdown::render(input = "intermediateGeospatialR/3_countySummaries2.Rmd",
-                  output_file = "intermediateGeospatialR/outputs/summary_test_3")
+rmarkdown::render(input = ~"intermediateGeospatialR/3_countySummaries2.Rmd",
+                  output_file = ~"intermediateGeospatialR/outputs/summary_test_3")
 ```
 <br> 
 
 The output is now for Harris county, which is what we wanted to happen. The filter levels and months have changed as well. Knowing that we can redefine parameters within this script and change the output of the summary document, we will utilize a for loop to produce material for all counties of interest. 
 <br>
-```{r, eval=FALSE}
+```{r block4, eval=FALSE}
 # create a vector of county names to loop over 
 counties <- c("Bexar", "Brazoria", "Harris")
 
@@ -77,8 +78,8 @@ for(i in counties ){
   county <- i
   # provide a path to the file and an output location
   ## edit the output path to distinguish output based on location 
-  rmarkdown::render(input = "intermediateGeospatialR/3_countySummaries2.Rmd",
-                  output_file = paste0("intermediateGeospatialR/outputs/summary_test_",i))
+  rmarkdown::render(input = ~"intermediateGeospatialR/3_countySummaries2.Rmd",
+                  output_file = paste0(~"intermediateGeospatialR/outputs/summary_test_",i))
 }
   
 ```
