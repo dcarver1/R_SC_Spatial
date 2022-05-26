@@ -1,6 +1,6 @@
 ---
 title: "Intermediate Spatial Analysis in R - Day 1"
-author: "carverd@colostate.edu"
+author: carverd@colostate.edu; contributors @ github (ccmothes)
 output:
   html_document: 
     toc: true
@@ -28,7 +28,7 @@ We are relying on a few different datasets for this tutorial. The first and most
 
 We're also using county level data from [Natural Earth](https://www.naturalearthdata.com/). 
 
-Lastly, we will use census tract data of the American Community Survey 2015, which we will be pulling using the [tidycensus](https://cran.r-project.org/web/packages/tidycensus/tidycensus.pdf) R library. 
+Lastly, we will use census tract data of the American Community Survey 2015, which can be retrieved using the [tidycensus](https://cran.r-project.org/web/packages/tidycensus/tidycensus.pdf) R library. 
 
 
 ## Examing the Monthly Composites 
@@ -37,7 +37,7 @@ You can find a more comprehensive description of the VIIRS monthly composites by
 <br>
 `/data/describeVIIRSData.html`
 <br>
-within your project folder.
+within your 'intermediateGeospatialR' folder.
 
 **Data Structure**
 
@@ -52,7 +52,7 @@ In the example provided in the `describeVIIRSData.html`, we can see that the dis
 The Lux, or Sky Beam, on top of the Luxor Hotel in Vegas is the brightest object on earth at 42.3 billions candela. This beam is produced by 39,7000 watt lamps. When all lamps are operating, the interior temperature of the room in which they are contained raises to approximately 300 degrees Fahrenheit. 
 
 ```{r block1, echo = FALSE}
-knitr::include_graphics("intermediateGeospatialR/data/pngsForMarkdown/light.jpg")
+knitr::include_graphics("data/pngsForMarkdown/light.jpg", error = F) #for some reason include_graphics only uses doc directory
 #[By InSapphoWeTrust from Los Angeles, California, USA - Light beam, Luxor, Las Vegas, CC BY-SA 2.0, https://commons.wikimedia.org/w/index.php?curid=24267782.]
 ```
 
@@ -60,18 +60,18 @@ knitr::include_graphics("intermediateGeospatialR/data/pngsForMarkdown/light.jpg"
 
 **Number of Observations** 
 
-The VIIRS day/night band can not capture data from under clouds. Therefore, not every night provides information regarding the surface radiance at a given location. When working with the monthly composites, it is essential to consider how many observations went into the calculation of a mean radiance. This is particularly important with this sensor, as the view angle from which the image was captured affects the observed radiance (think about a building blocking light in a particular direction). We will be evaluating this effect in the second part of the lesson. 
+The VIIRS day/night band cannot capture data from under clouds. Therefore, not every night provides information regarding the surface radiance at a given location. When working with the monthly composites, it is essential to consider how many observations went into the calculation of a mean radiance. This is particularly important with this sensor, as the view angle from which the image was captured affects the observed radiance (think about a building blocking light in a particular direction). We will be evaluating this effect in the second part of the lesson. 
 
 
 ## Libraries of Interest
 
 **Processing Spatial Data**
 
-We are going to be working with [sf](https://cran.r-project.org/web/packages/sf/sf.pdf) and [raster](https://cran.r-project.org/web/packages/raster/raster.pdf) to process the imagery and polygons. 
+We are going to be working with [`sf`](https://cran.r-project.org/web/packages/sf/sf.pdf) and [`terra`](https://cran.r-project.org/web/packages/terra/terra.pdf) to process the imagery and polygons. 
 
 **Census Data**
 
-`tidycensus` requires a personal access token to utilize the API. As such, we are not going to be pulling data from tidy census as part of this lesson. However, the code showing how the data was pulled is provided as supporting material if this is something you need to do later on in your work. `src/section1/prepWorkshopFilePrep.R`
+`tidycensus` requires a personal access token to utilize the API. As such, we are not going to be pulling data from tidycensus as part of this lesson. However, the code showing how the data was pulled is provided as supporting material ( `src/section1/prepWorkshopFilePrep.R`) if this is something you need to do later on in your work.
 
 **Visualizing Spatial Data**
 
@@ -79,29 +79,22 @@ We will be using the `tmap` library for quick visualizations of these spatial fe
 
 **Data Wrangling and Summarizing** 
 
-`dplyr` is a great library for efficiently performing multiple operations on a dataset. We will be using it multiple times throughout the lesson. 
+`dplyr`, `tidyr` and `stringr` are great packages for efficient data wrangling, and are a part of the [`tidyverse`](https://www.tidyverse.org/), a collection of R packages designed for data science. 
 
 ## Installing Libraries
 
-```{r block2, eval = FALSE}
-### uncomment and run if you do not have the packages installed 
-# install.packages("sf")
-# install.packages("raster")
-# install.packages("dplyr")
-# install.packages("tmap")
+```{r block2}
+source("installPackages.R")
 ```
 
-If you've used these packages before just load them into your working memory using the `library()` function. 
+We now have a function in our environment called `packageLoad()`. With this function we can supply it with all the packages we need for the lesson, and for each one it checks if it is currently installed, installs it if it is not, and then loads all packages into our session memory. 
 
 ```{r block3}
 # load required libraries 
-library(sf)
-library(raster)
-library(dplyr)
-library(tmap)
+packageLoad(c("sf", "terra", "dplyr", "tidyr", "stringr", "tmap"))
 ```
 
-Since this lesson is in an RProject, your working directory should be automatically set to the correct path. Double check that it is set to something that looks like: `~/Desktop/R_SC_Spatial/`
+Since this lesson is in an R Project, your working directory should be automatically set to the correct path (the directory your .Rproj file is in). Double check that it is set to something that looks like: `~/Desktop/R_SC_Spatial/`, depending where you saved the folder from GitHub. 
 
 ### Check in: Are all the libraries loaded? 
 
@@ -110,9 +103,9 @@ Since this lesson is in an RProject, your working directory should be automatica
 
 You could still be waiting for installations, which is fine. 
 
-If your having issues with a specific package connect with a helper. 
+If you are having issues with a specific package connect with a helper. 
 
-If everything seemed to work but you want to double check, try to the base R function below to see what's currently loaded into your system memory. 
+If everything seemed to work but you want to double check, use the base R function below to see what's currently loaded into your session memory. 
 
 ```{r block4, eval = FALSE}
 (.packages())
@@ -125,7 +118,7 @@ If everything seemed to work but you want to double check, try to the base R fun
 
 **Imagery**
 
-We will pull our full list of images using the `list.files()` function. This function grabs all the files within a specific directory. We can filter for specific files based on a text pattern. We will use `.tif` to grab all the rasters. It's essential here that we also indicate full names equals `TRUE`. This will provide the full path to the images, which we will need to read them in. 
+We will pull our full list of images using the `list.files()` function. This function grabs all the files within a specific directory. We can filter for specific files based on a text pattern. We will use `.tif` to grab all the rasters. It's essential here that we also indicate full names equals `TRUE`. This will provide the full path to the images, which we need to read them in. 
 
 ```{r block5}
 # night light imagery 
@@ -134,29 +127,31 @@ images <- list.files(path = "intermediateGeospatialR/data/nightLights",
                        full.names = TRUE)
 ```
 
-Currently our images are just files paths, which is fine because we don't need spatial objects just yet. There are two types of images, so we need to filter further. 
+Currently our images are just files paths, which is fine because we don't need spatial objects just yet. There are two types of images for each month, count and radiance values. For this first lesson we just want the 'counts' data, which represents the number of observation days within that month.
 ```{r block6}
-# use grep to separate images into count and radiance features 
+# use the 'grep' function to filter out just the 'counts' image files
 counts <- images[grepl(pattern = "_counts", x = images)]
 ```
 
 ### Work Break
 
-Develop a object that select the remaining images in the file folder excluding the "_counts" images
+How would you select the remaining images in the file folder excluding the "_counts" images (i.e., just the radiance files)? We will be using these radiance files for the rest of the lesson.
+
 <br>
+
 <details><summary>Answer</summary>
 
 The are multiple ways to approach this. 
 
 ```{r block7}
-# use the opposite operator to grab the other half 
-images2 <- images[!grepl(pattern = "_counts", x = images)]
+# use the opposite operator to grab the other half. '!' filters anything that does NOT equal that pattern
+radiance <- images[!grepl(pattern = "_counts", x = images)]
 
 # select all paths that are not current in the counts file 
-images2 <- images[!images %in% counts]
+radiance <- images[!images %in% counts]
 
 # or select a pattern unique to the image set you need to grab
-images2 <- images[grepl(pattern = "10arc.tif", x = images)]
+radiance <- images[grepl(pattern = "arc.tif", x = images)]
 
 ```
 
@@ -164,62 +159,55 @@ images2 <- images[grepl(pattern = "10arc.tif", x = images)]
 
 <br>
 
-To keeps out object names representative, lets do a little clean up. 
-
-```{r block8}
-# redefine images to be images only with radiance features now that we have two categories 
-images <- images2 
-rm(images2)
-
-```
 
 **County Data**
 
-The county data has been prepped for us so we can just read it in by pointing to the `.shp` file which it is stored in. 
+The county data has been prepped for us so we can read it in by pointing to the `.shp` file which it is stored in. 
 
 ```{r block9}
 ## county locations
-counties <- sf::st_read(dsn = "intermediateGeospatialR/data/counties/countyTex.shp",quiet =TRUE)
+counties <- sf::read_sf(dsn = "intermediateGeospatialR/data/counties/countyTex.shp",quiet =TRUE)
 # head(counties)
 ```
 
-This data contains records for three counties in Texas. 
-Bexar county is home to San Antonio. 
-Harris county is home to Houston. 
-Brazoria county is home to a few smaller municipalities and multiple coastal wildlife refugees, but is primarily rural.
+This data contains records for three counties in Texas.
+
+* Bexar county is home to San Antonio. 
+* Harris county is home to Houston. 
+* Brazoria county is home to a few smaller municipalities and multiple coastal wildlife refugees, but is primarily rural.
 
 
 **Census Data**
 
 The census data for these three counties has be prepped for this lesson. Reference the file *prepWorkshopFilePrep.R* to see how to use the `tidycensus` library to call census data directly through R.   
 
-Much like the county data, we can just read this information in directly. 
+The census data was saved as a spatial `.shp` file (the census attributes were tied to each census tract within our counties of interest), so we can read it in like we did the county data.
 
 ```{r block10}
 ## census tract data 
-censusT <- sf::st_read(dsn = "intermediateGeospatialR/data/census/ageAndPoverty.shp", quiet =TRUE)
+censusT <- sf::read_sf(dsn = "intermediateGeospatialR/data/census/ageAndPoverty.shp", quiet =TRUE)
 # head(censusT)
 ```
 
 ### Initial Data Visualization 
 
-With everything loaded, let's plot the features and take a look at each one. 
+With everything loaded, let's plot the data and take a look at each one. 
 
 ```{r block11}
 tmap::tmap_mode("view") # sets up the interactive map 
 # we need to read the raster in to visualize 
-tmap::qtm(raster::raster(images[1]))
+tmap::qtm(terra::rast(radiance[1]))
 ```
 
-Because the `images` object is just a vector of file paths we need to call the `raster` function to read in one of the images to visual it. We do not need to store this as an object at this point.   
+Because the `images` object is just a vector of file paths we need to call the `rast` function to read in one of the images as a raster file to visual it. We do not need to store this as an object at this point.   
 
 The map is not exciting because most of the state is dark and the `tmap` library forces a generalization (reclassification) of the data to visual large extents. The net effect of this is a very boring map. We can examine the specific values of the raster to be sure the data is valid. 
 
 **Nesting Functions to Visualize All Unique Values**
 
 ```{r block12, eval = FALSE}
-# read in raster, grab values, determine unique values, convert to df for visualiation purposes, View the dataframe for visual inspection 
-View(data.frame(unique(values(raster::raster(images[1])))))
+# read in raster, grab values, determine unique values, convert to df for visualization purposes, View the dataframe for visual inspection 
+View(data.frame(unique(values(terra::rast(radiance[1])))))
 ```
 
 There is data there, so let's move on. 
@@ -233,41 +221,48 @@ tmap::qtm(counties)
 
 <br>
 
-Counties seem to displaying just fine as well. 
 
 **Visualize Census Tract data**
 
-We are working at the census tract level. Each census track has on average 4,000 people in it. The population of Houston is about 2.3 million, so we can expect a lot of rows in this dataset. Add to that the fact that each census tract is likely to have a fairly complex geometry, which requires storing a lot of coordinates. So this is not a dataset you just want to pass into `qtm()` or `View()` without understand how much data is there. 
+We are working at the census tract level. Each census track has on average 4,000 people in it. The population of Houston is about 2.3 million, so we can expect a lot of rows in this dataset. Add to that the fact that each census tract is likely to have a fairly complex geometry, which requires storing a lot of coordinates. So, lets understand more about this dataset before we try to plot it. 
 
 ```{r block14}
-# check the structure of the dataset
+# By printing the object we can see some metadata and the first 10 rows in the console
+censusT
+
+#the 'str' base R function gives us more details on the structure of the dataset
 str(censusT)
 ```
 
-From this we can see that there are 5 columns and 2406 observations. This is a lot to show on a map but not that much to show in a data table 
+You can also inspect the spatial object as a dataframe with `View`, which allows you to sort and filter the data
 
 ```{r block15, eval=FALSE}
 View(censusT)
 ```
 
-Looking at the data we can duplicated GEOIDs, so lets grab every other feature for visualization purposes using the `seq()` function. 
+Let's plot these census tracts now. Note that you can click on a census tract to view a pop-up of its attributes. 
 
 ```{r block16}
-# since there are 2,000-ish census tracts in those counties, we only want to visualize a few. We can use the sequence function to select features that are all within the same county. 
-tmap::qtm(censusT[seq(from = 3, to = 19, by = 2),])
+tmap::qtm(censusT)
 ```
 
 
-## Transform Datasets to WGS84
+## Coordinate Systems
 
+Probably the most important part of working with spatial data is the coordinate reference system (CRS) that is used. In order to analyze and visualize spatial data, all objects must be in the exact same CRS.
+
+Therefore, before we move on lets check the CRS of our raster and vector files:
 The data looks good, so let's check the details. 
-print raster and sf objects is different then printing stand R objects. These objects return something much closer to the result of `str()` rather then the full dataset. 
+
 ```{r block17}
-# create temp object to view attribute data  
-temp <- raster::raster(images[1])
-temp
+# All the raster images were created using the same methodology so we can check the CRS of just one of them 
+terra::rast(images[1])
+
+#we will use this rasters' propoerties later so let's save it as a variable
+temp <- terra::rast(images[1])
+
 ```
-This dataset is in WGS84. 
+This dataset is in WGS84 (longitude/latitude). 
 
 ```{r block18}
 # print to view attributes 
@@ -279,34 +274,36 @@ This dataset is in NAD83.
 # print to view attributes
 counties
 ```
-This dataset is in NAD83.
+This dataset is also in NAD83.
 
 **Matching the CRS**
 
-The datasets are in a different coordinate reference systems: WGS84 and NAD83. We want to correct that before we do any spatial analysis. 
+The vector and raster datasets are in a different CRS: WGS84 and NAD83. We need to correct that before we do any spatial analysis. 
 
 
-What coordinate reference systems you choose to use is up to you, however I'm going to take our two `sf` features and project them to WGS84. The reason for this is twofold. First, there are fewer features to reproject going in this direction. Second, when you're reprojecting raster data, there is the potential for resampling to occur. 
+What coordinate reference system you choose to use is up to you, but for this lesson we are going to take our two `sf` features and project them to WGS84. The reason for this is twofold. First, there are fewer features to reproject going in this direction. Second, when you're reprojecting raster data, there is the potential for resampling to occur. 
 
-It's probably not going to be an issue with WGS84 to NAD83 in the United States, but since the raster data is our primary dataset I want to avoid altering it any more than I need to.
+It's probably not going to be an issue with WGS84 to NAD83 in the United States, but since the raster data is our primary dataset we want to avoid altering it any more than we need to.
 
+
+To transform vector data, we can use the `st_transform()` function, supplying it with the CRS of the raster files which can be retrieved using the `crs()` function
 ```{r block20}
 # reproject datasets to match the CRS of our raster object 
-counties <- sf::st_transform(x = counties, crs = temp@crs)
-censusT <- sf::st_transform(x = censusT, crs = temp@crs)
+counties <- sf::st_transform(x = counties, crs = crs(temp))
+censusT <- sf::st_transform(x = censusT, crs = crs(temp))
 ```
 
-**test the transformation**
+**Test the transformation**
 
-We're using the raster `temp` for CRS information, and an `sf` function to transform the CRS of our two polygon features. 
+Let's double-check that all our vector and raster data are in the same CRS so we can move forward. We can use the `st_crs()` function from the `sf` package, which can also retrieve CRS info from `terra` raster objects 
 ```{r block21}
 # test for CRS match 
-raster::compareCRS(temp, counties)
-raster::compareCRS(temp, censusT)
+st_crs(counties) == st_crs(temp)
+st_crs(censusT) == st_crs(temp)
 ```
-Looks good. 
+Great, both return 'TRUE'.
 
-With the reprojecting taken care off, let's drop the raster object to keep our working directory clean and memory open. 
+With the reprojection taken care of, let's drop the 'temp' raster object to keep our working directory clean and memory open. 
 ```{r block22}
 # remove the raster object to keep the working directory clean and free up working memory  
 rm(temp)
@@ -317,41 +314,56 @@ rm(temp)
 
 The imagery is still at the state level. We need to process it down to the county level so that we can associate it with our census tract data. Working with the smallest geographic extent you can is always going to save you time and hopefully headaches as it is less computationally intensive. 
 
+**Vector data with `terra`**
+
+So far we have just been using properties of each raster and vector file to perform operations, however to conduct spatial analysis there is one more step we need to take to make these two types of spatial data compatible. The `terra` package uses a special form of vector data called `SpatVect` objects instead of `sf` objects. Luckily, they have made it relatively easy to convert `sf` objects to `SpatVect` objects using the `vect()` function. We will do this first before we build our workflow.
+
+```{r spatvect}
+# convert sf objects to spatvect
+counties <- vect(counties)
+censusT <- vect(censusT)
+```
+
+
 ### A Note on Creating a Workflow 
 
 The truth is, when you pick up a new workflow (like this one), you're not going to get it right the first time. 
 
-So, I always recommend breaking down the process to the minimum number of features and do your best to clarify that workflow in your mind before you start thinking about iterating the process. Get it to work once first.  
+So, we recommend breaking down the process to the minimum number of features to get that workflow working first, then you can start thinking about iterating the process.
 
-All the code chunks in this section show how something that was easy to pull together and works well can be improved over time to develop a solid and clean process. 
 
-**The Basic**
+**Start Small**
 
 ```{r block23}
 ### figure out the process with one feature
-# grab a path to an image 
-f1 <- images[1]
-## read in the file as a raster 
-r1 <- raster::raster(f1)
 
-### crop the image to a specific county
-# select county of interest 
+# create a raster from one image file path 
+r1 <- terra::rast(radiance[1])
+
+### crop the image to one of the counties
+
+# select county of interest (each row is a unique county)
 c1 <- counties[1, ]
-# crop the image  
-r2 <- raster::crop(x = r1, y = c1)
-# mask the image
-r3 <- raster::mask(x = r2, mask = c1)
+
+# crop the raster to the county extent 
+r2 <- terra::crop(x = r1, y = c1)
+
+# mask the image (only keep cells that overlap with the county polygon)
+r3 <- terra::mask(x = r2, mask = c1)
+
 # take a look to see if this worked 
 qtm(r3)
 ```
 
 
-The basic workflow consists of indexing the images and the counties. We then call the `crop` and `mask` functions from the `raster` library. The result is a raster that has been reduced to the extent of the county of interest. 
+The basic workflow consists of indexing the images and the counties. We then call the `crop()` and `mask()` functions from the `terra` library. The result is a raster that has been reduced to the boundary of the county of interest. 
+
+<br>
 
 **Streamline the Workflow**
 
-Now that we know that process works, let's try to streamline this process a little bit so that we are not creating so many variables. We will utilize `dplyr` piping structure. The `%>%` pipe is a custom operator that takes the output of one function and places it as an input into another function. 
-This operator allows you to connect functions from output to input, output to input, and it makes for efficient code. 
+Now that we know that process works, let's try to streamline this process a little bit so that we are not creating so many variables in our environment. We will utilize `dplyr` piping structure. The `%>%` pipe is a custom operator that takes the output of one function and places it as an input into another function. 
+This operator allows you to connect functions from output to input, output to input, without creating intermediate variables, thus resulting in more efficient code. 
 
 <br>
 
@@ -360,10 +372,10 @@ This operator allows you to connect functions from output to input, output to in
 ```{r block24}
 ### select county of interest 
 c1 <- counties[1, ]
-## read in files as a raster 
-r1 <- raster::raster(images[1])%>%
-  raster::crop(y = c1)%>%
-  raster::mask(mask = c1)
+## read, crop and mask the first raster image 
+r1 <- terra::rast(radiance[1])%>%
+  terra::crop(y = c1)%>%
+  terra::mask(mask = c1)
 qtm(r1)
 ```
 We've accomplished the same result, but this time we've only declared two variables. This adds clarity to our code and is generally a good practice to follow. 
@@ -374,47 +386,49 @@ We've accomplished the same result, but this time we've only declared two variab
 **Make it a Function** 
 
 The workflow we've created above requires two inputs and produces a single output. To make this code more transferable, we can build it out as a function. This optimizes the code for reuse and will allow us to efficiently apply the process to multiple features. 
+
 <br>
+
 <details><summary>Answer</summary>
 
 ```{r block25}
 clipMask <- function(path, extent){
   ## path is a full file path to a raster object
-  ## extent is a spatial object which will be used to clip and mask the raster
+  ## extent is a spatial object (in SpatVect format) which will be used to clip and mask the raster
   ## returns a raster object that is clipped and masked to the extent object 
-  r1 <- raster::raster(path) %>%
-  raster::crop(y = extent) %>%
-  raster::mask(mask = extent)
+  r1 <- terra::rast(path) %>%
+  terra::crop(y = extent) %>%
+  terra::mask(mask = extent)
 return(r1)
 }
 ``` 
 
-When we write up the function, we're inherently abstracting some of the components. So we're no longer indexing from the county `sf` object to pull a specific county. Instead, we're just saying we want an extent object and we want a raster. Counter this abstraction by putting documentation right at the start of your function so people can understand what it is you're asking for.
+When we write up the function, we're inherently abstracting some of the components. So we're no longer indexing from the county object to pull a specific county. Instead, we're just saying we want an extent object and we want a raster. Counter this abstraction by putting documentation right at the start of your function so people can understand what it is you're asking for.
 
 </details>
 
 <br>
 
-**Applying the Function to All Imagery**
+**Applying the Function to All Images**
 
-In the data folder `/intermediateGeospatialR/data/nightLights` we have imagery for 12 months in 2019. We also have three counties of interest that we're going to be working in. If we want an image for each county for each month, we need to create 36 images. 
+In the data folder `/intermediateGeospatialR/data/nightLights` we have radiance imagery for 12 months in 2019. We also have three counties of interest that we're going to be working in. If we want radiance for each county for each month, we need to create 36 images. 
 
 We could hard code to call our function 36 times. 
 ```{r block26, eval=FALSE}
-im1 <- clipMask(path = images[1], extent = counties[1,])
-im2 <- clipMask(path = images[2], extent = counties[1,])
+im1 <- clipMask(path = radiance[1], extent = counties[1,])
+im2 <- clipMask(path = radiance[2], extent = counties[1,])
 ## so on an so one
 ```
 
-Everyone who has learned to code has done something like this, but no one who codes for a living would every want to do it again. 
+While this will definitely work, it is very repetitive. If we had hundreds of counties instead of 3 this would take forever to write. This is where iterating with 'for loops' comes into play. 
 
 **Loop the Loop** 
 
-We can define all 36 features much more efficiently by utilizing for loops. 
+We can define all 33 features much more efficiently by utilizing for loops. 
 
-For loops (think "for each feature in the list") are a great tool for doing the same operation multiple times. Especially when you can use indexing to grab specific features based on their position in a vector or list. 
+For loops (think "for each feature in the list") are a great tool for doing the same operation multiple times. 
 
-When developing a for loop operation, I think the best thing to do is to write out the general structure and then assign your variables to test the process before you let the loop run. If the loop works once, it should work every time. For this example we should expect a single image to return from each iteration of the loop. 
+When developing a for loop operation, it is helpful to write out the general structure first and then assign your variables to test the process before you let the loop run. If the loop works once, it should (ideally) work every time. For this example we expect a single image to return from each iteration of the loop. 
 
 ```{r block27}
 ### outline the structure you want 
@@ -422,7 +436,7 @@ When developing a for loop operation, I think the best thing to do is to write o
 # for each county - return an image for each month
 ## select the county of interest
 # for each raster
-## pull a specific month's image 
+## select a specific month 
 ## clipMask()
 ## save the processed image 
 ```
@@ -430,15 +444,16 @@ When developing a for loop operation, I think the best thing to do is to write o
 Take a moment to fill in the code using the above outline. 
 
 <br>
+
 <details><summary>Answer</summary>
 
 ```{r block28, eval = FALSE}
 # for each county - return an image for each month
-for(i in seq_along(counties$STATEFP)){
+for(i in seq_along(counties)){
   c1 <- counties[i,] # select a specific county 
-  for(j in seq_along(images)){
+  for(j in seq_along(radiance)){
     ## pull a specific month's image 
-    p1 <- images[j]
+    p1 <- radiance[j]
     ## clipMask()
     r2 <- clipMask(path = p1, extent = c1)
     ## save the processed image 
@@ -447,27 +462,22 @@ for(i in seq_along(counties$STATEFP)){
 }
 ```
 
-So it looks okay, but let's test it. I strongly recommend testing the structure using predefined variables before attempting to iterate the process via the loops. 
-
-</details>
-
+So it looks okay, but let's test it on just a single iteration before we run the entire loop on all features. 
 
 
 ```{r block29}
-### define the loop variables 
+### define i and j so the loop only runs for the first features 
 i <- 1
 j <- 1
 ###
-# now we can run this without the loop structure. 
-# I typically do this by running single lines at a time but here we are just 
-# commenting out sections of the process we don't want to run 
+#comment out the loop part since we are just running once 
 #for(i in seq_along(counties$STATEFP)){
   c1 <- counties[i,] # select a specific county 
 #  for(j in seq_along(images)){
     ## pull a specific month's image 
     # p1 <- images[j]
     ## clipMask()
-    r2 <- clipMask(path = images[j], extent = c1)
+    r2 <- clipMask(path = radiance[j], extent = c1)
     ## save the processed image 
     # we will come back to this
 #  }
@@ -476,25 +486,32 @@ j <- 1
 r2
 ```
 
+</details>
+
+<br>
+
 The slimmed down loop worked as we expected. It returned a processed image, but we haven't figured out what to do with the processed image yet. 
 
 **Saving the Output From the Loop**
 
 If we were to run the looping operation as is, it would process the 36 images, but we would end up with only a single feature at the end. That is because the variable `r2` is being rewritten every time the loop repeats itself. We could get crafty and store all these images in memory using a `list()`, or we can write out the files and pull them back in as needed. There are pros and cons for both, but today we will be writing out the imagery files. 
+
+<br>
+
 See the code below if you wanted to store it all in memory as a list. 
 
 ```{r block30, eval = FALSE}
 # create empty list
 processImages <- list()
 
-for(i in seq_along(counties$STATEFP)){
+for(i in seq_along(counties)){
   c1 <- counties[i,] # select a specific county 
   list1 <- list()
-  for(j in seq_along(images)){
+  for(j in seq_along(radiance)){
     ## pull a specific month's image
     # p1 <- images[j]
     ## clipMask()
-    list1[[j]]<- clipMask(path = images[j], extent = c1)
+    list1[[j]]<- clipMask(path = radiance[j], extent = c1)
   }
   processImages[[i]] <- list1
   rm(list1)
@@ -506,12 +523,12 @@ Growing a list like this is pretty inefficient and indexing can be a lot to keep
 
 **Develop a File Structure** 
 
-If we want to save the clipped and masked images, we need to first create a directory in which we can store all the images for each county.
+If we want to save the processed images, we need to first create a directory in which we can store all the images for each county.
 We can do this using a similar loop structure as the one above.
 By concatenating characters using the `paste0()` function we can build out paths for new files. 
 ```{r block31, eval=FALSE }
 # create new file directories for processed imagery 
-for(i in unique(counties$NAME)){ # looping over names not indexes 
+for(i in unique(counties$NAME)){ # looping over names not indices 
   print(i)
   location <- paste0("data/nightLights/", as.character(i)) # create path for file 
   if(!file.exists(location)){ # test if this folder already exists 
@@ -521,25 +538,25 @@ for(i in unique(counties$NAME)){ # looping over names not indexes
 ```
 
 
-With the file structure in place, we can run the process and write out the rasters by constructing a path and file name that will allow us to confidently find the data for a given month at a specific location. 
+With the file structure in place, we can run the process and write out the rasters by constructing a unique path and file name for a given month at a specific location. 
 
-We can use `names(r1)` in this case because these images were named when they were prepped for this lesson. You can check out how this was done in the script `prepWorkshopFilePrep.R`. That process is still dependent on initial file management actions shown [here](https://github.com/dcarver1/covidNightLights/blob/main/monthlyData/downloadingImages.R). All this is to say is think about your folder structure when create material as it has long lasting effect on your workflow. 
+We can use `names(r1)` in this case because these images were named when they were prepped for this lesson. You can check out how this was done in the script `prepWorkshopFilePrep.R`. That process is still dependent on initial file management actions shown [here](https://github.com/dcarver1/covidNightLights/blob/main/monthlyData/downloadingImages.R). All this is to say it is important to think about your folder structure when creating material as it can have long lasting effects on your workflow. 
 
 ```{r block32, eval = FALSE}
 # for each county - return an image for each month
-for(i in seq_along(counties$STATEFP)){
+for(i in seq_along(counties)){
   print(i)
   c1 <- counties[i,] # select a specific county 
-  for(j in seq_along(images)){
+  for(j in seq_along(radiance)){
     ## pull a specific month's image 
-    p1 <- images[j]
+    p1 <- radiance[j]
     ## clipMask()
     r2 <- clipMask(path = p1, extent = c1)
     ## save the processed image 
     countyName <- as.character(c1$NAME) # define county name
     rasterName <- names(r2) # define raster name
     file <- paste0("intermediateGeospatialR/data/nightLights/",countyName, "/",rasterName,".tif") # concatenate features to create a path
-    raster::writeRaster(x = r2 , 
+    terra::writeRaster(x = r2 , 
                         filename = file,
                         overwrite = TRUE)
   }
@@ -548,7 +565,7 @@ for(i in seq_along(counties$STATEFP)){
 
 **Room for Improvement?** 
 
-So this does work well, but looking back at the `clipMask` function we can see that it reads in the same raster multiple time during the process.
+So this does work well, but looking back at the `clipMask` function we can see that it reads in the same raster multiple times during the process.
 
 ```{r block33}
 clipMask
@@ -562,12 +579,12 @@ Let's adapt the function so that we can rework the workflow and only read in mon
 
 **Reduce the Number of Raster Reads by 3** 
 
-We wrote the first clip mask function in the script that we are using to run the code, but you can also write functions as standalone scripts and `source()` them into your code. That way, you can keep your primary work flow clean and still have your functions to rely on. So let's source this new function and take a look at it. 
+We wrote the first clip mask function in the script that we are using to run the code, but you can also write functions as standalone scripts and `source()` them into your code. That way, you can keep your primary work flow clean and still have your functions to rely on. So let's source this new function (saved as a script in the intermediate lesson folder) and take a look at it. 
 ```{r block34}
 source("intermediateGeospatialR/src/section1/clipMask2.R")
 print(clipMask2)
 ```
-The output of this function is the same as our current, but there are three major difference. 
+The output of this function is the same as our current one, but there are three major differences. 
 
 **1. Input a raster object, not a path to an image.** 
 
@@ -584,38 +601,38 @@ Rather then reading the raster file in within the function, we are passing a ras
 
 We build in a condition that tests if the raster is larger than the feature it is being clipped and masked to. This is a just a concept check, but a great one if you're planning on using this workflow in multiple different projects. 
 ```{r block36, eval = FALSE}
- if(raster::extent(raster)< raster::extent(extent)){
+ if(terra::ext(raster) < terra::ext(extent)){
     print("The raster may be smaller then the extent object")
   }
 ```
 
 **3. Testing the CRS of the objects.**
 
-*HP: No description of this difference?*
-
+If the objects are not in the same CRS we cannot perform the spatial analysis.
 ```{r block37, eval=FALSE}
- if(!raster::compareCRS(x = raster, y = extent)){
+ if(terra::crs(raster) != terra::crs(extent)){
     return("The crs of the objects to not overlap")
   }else{
-    return(raster%>%
-      raster::crop(y = extent)%>%
-      raster::mask(mask = extent))
+    return(raster %>%
+      terra::crop(y = extent) %>%
+      terra::mask(mask = extent))
+  }
 ```
 
 **Restructure the Workflow for the New Function** 
 
-As the `clipMask2()` function requires a raster object as the input, we need to restructure our loops to account for this change. The goal here is to limit the number of times we need to read in the raster objects, so let's start by looping over all twelve images.
+As the `clipMask2()` function requires a raster object as the input, we need to restructure our for loops to account for this change. The goal here is to limit the number of times we need to read in the raster objects, so let's start by looping over all twelve images.
 
 ```{r block38, eval=FALSE}
-for(i in seq_along(images)){
-  r1 <- raster::raster(images[i]) # read in the raster
+for(i in seq_along(radiance)){
+  r1 <- terra::rast(radiance[i]) # read in the raster
   nameR <- names(r1) # save the name as a variable to use in the file structure later
 }
 ```
 
 We still need our extent object to run the function, so let's next loop over that feature. 
 ```{r block39, eval = FALSE}
-for(j in seq_along(counties$STATEFP)){
+for(j in seq_along(counties)){
   c1 <- counties[j,] # select a specific county 
   nameC <- as.character(c1$NAME) # grab the name of the county 
   r2 <- clipMask2(raster = r1, extent = c1) # call the function with input from the loop above
@@ -628,11 +645,11 @@ Now we can combine the loops.
 
 ```{r block40, eval = FALSE}
 # loop over images 
-for(i in seq_along(images)){
-  r1 <- raster::raster(images[i])
+for(i in seq_along(radiance)){
+  r1 <- terra::rast(radiance[i])
   nameR <- names(r1)
   # loop over counties 
-  for(j in seq_along(counties$STATEFP)){
+  for(j in seq_along(counties)){
     c1 <- counties[j,]
     nameC <- as.character(c1$NAME) 
     r2 <- clipMask2(raster = r1, extent = c1)
@@ -647,7 +664,7 @@ This is great. We get to the same result but using a different path that is more
 
 **Closing Thoughts** 
 
-I wanted to walk through this as an iterative process because this is how creating a workflow actually works. You don't get it right the first time, and you usually don't get it right the second or third time. Good code is good because you come back to it, you alter it, and you make it better over time. Focus on finding something that works, and understand that you will need to continuously work on finding ways to make that better as you go along. Code is only ever done when people stop using it. 
+We wanted to walk through this as an iterative process because this is how creating a workflow actually works. You don't get it right the first time, and you usually don't get it right the second or third time. Good code is good because you come back to it, you alter it, and you make it better over time.
 
 
 ## Prep the Census Data 
@@ -658,11 +675,10 @@ head(censusT)
 dim(censusT)
 length(unique(censusT$GEOID))
 ```
-Looking at the census data, we can see that each unique GEOID or census tract has multiple rows associated with it. We could work with that, but you're carrying around twice the amount of data and that means twice the amount of geoprocessing and probably more then twice the amount of time. So much like before, if we can drop spatial features from an analysis, let's do it. A little bit of data processing and we can get all the content associated with one feature onto a single row. 
 
 **Restructuring the Census Data**
 
-Each census tract has two variables associated with it. Because of how we pulled the data, these appear as separate rows. We will need to filter our data based on these two census variables, so let's pull them out.   
+Each census tract has two variables associated with it. Because of how we pulled the data, these appear as separate rows, which duplicates all of our geometries. One way to fix this would be to filter by our two variables, creating two separate datasets, specify variable names and then join them back together.   
 
 ```{r block42}
 # Grab unique variables. 
@@ -671,131 +687,90 @@ vals <- unique(censusT$variable)
 ### B17001_002 == poverty
 ```
 
-Next, we can create a subset of the census data by filtering on one of the variables. Write some code that selects all the rows associated with on of the variables?
+Say you wanted to filter out just the median age data, whose variable ID is 'B01002_001', how would you do that?
+
 <br>
+
 <details><summary>Answer</summary>
 
-This is a index and selecting question and there are a few ways to approach it. 
+There are a few ways to approach it using base R or `dplyr`. 
 
 ```{r block43}
 #Base R 
-c1 <- censusT[censusT$variable == vals[1], ]
+c1 <- censusT[censusT$variable == 'B01002_001', ]
 
-# dplyr 
-c1 <- dplyr::filter(censusT, variable == vals[1])
+# dplyr
+c1 <- st_as_sf(censusT) %>% #dplyr only works with 'sf' objects, so we must first convert our 'spatvect' object
+  dplyr::filter(variable == 'B01002_001')
 ```
 
-Both options get you to the same place. I tend to use base R when only a single action is being taken and dplyr when I am piping multiple functions together. Comes down mostly to a personal preference. 
+ 
 </details>
 
+<br>
 
-**Connect Both Variables in Simplified Structure**
-
-The GEOID, NAME, and geometry will be the same for each census tract. Since we've already got that stored we need to remove those columns from the rows associated with our second census variable. We will do this using dplyr. 
+There is a more efficient way we can clean this data that does not involve creating intermediate datasets. This would be to transpose the data, which can be done in the `tidyr` package with the `pivot_wider()` and `pivot_longer()` functions. 
 
 ```{r block44}
-c2 <- censusT %>% ## use dplyr so we can pipe some more transformations 
-  as.data.frame() %>% # convert to df to drop geometry column so that is not transferred 
-  dplyr::filter(variable == vals[2])%>% 
-  dplyr::select("GEOID", "variable", "estimate", "moe")# drop duplicated features besides GEOID
+censusData <- st_as_sf(censusT) %>% # convert back to sf to perform dplyr and tidyr operations
+  as.data.frame() %>% # treat as data frame to perform tidyverse functions
+  tidyr::pivot_wider(names_from = variable, values_from = c('estimate', 'moe')) %>% 
+  dplyr::rename(medianAge_estimate = estimate_B01002_001, medianAge_moe = moe_B01002_001,
+                poverty_estimate = estimate_B17001_002, poverty_moe = moe_B17001_002) %>%  #rename columns to something more reader-friendly
+  st_as_sf() #convert back to sf object
+
+qtm(censusData)
+
 ```
 
-The columns variable, estimate, and moe are the only features we need to add to our object `c1`. We retained the GEOID column to use as a reference for joining the two datasets. `sf' objects allow you to do tabular joins with non spatial data and retain the spatial elements of the object--the definition of nifty. 
-
-Now it's just a matter of joining these features and renaming the columns to allow us to better keep track of what is referenced. 
-
-```{r block45}
-## we can join and retain a spatial objects 
-censusData <- dplyr::left_join(x = c1, y = c2, by = "GEOID")
-names(censusData)
-```
-Because some of the names between the datasets were duplicated the join funtion added the ".x" and ".y" to distinguish them and note what dataset the columns come from. We will rename them. 
-
-```{r block46}
-colnames(censusData) <- c("GEOID","NAME","medianAge","estimate_age","moe_age","poverty","estimate_poverty","moe_poverty","geometry")
-# map the first 10 rows of the new dataset
-qtm(censusData[1:10,])
-```
-
-When we call `qtm` on these features, it is important to select a subset of the full dataset, particularly with complex polygon features. Mapping all those point relationships can take some time.
+Now we have a cleaned dataset with a single row for each GEOID and mroe descriptive variable names. When we click on a census tract we can see the values for median age and poverty in the pop-up.
 
 ## Associate Nightly Radiance with Each Census Tract 
 
-Our goal is to end up with a single measure of radiance per census tract per month. This will require some iterate processes, so just like before when we were developing the method for processing the rasters, we will basically create a test set and make sure we get our methodology set before thinking about how to iterate the workflow. 
+Our goal is to end up with a single measure of radiance per census tract per month. This will require some iterative processes, so just like before when we were developing the method for processing the rasters, we want to create a test set first and make sure we get our methodology set before scaling up to an iterative workflow. 
 
 ```{r block47}
 ## create a subset to test the process. 
-r1 <- raster::raster("intermediateGeospatialR/data/nightLights/Harris/june_10arc.tif")
-head(censusData) # check for harris county locations 
+tempr <- terra::rast("intermediateGeospatialR/data/nightLights/Harris/june_10arc.tif")
+head(censusData) # look for harris county locations (to match our temp raster) 
 # pull a subset 
-t2 <- censusData[2:4,]
+tempc <- censusData[2:4,]
 ```
 
 
 **Extract Values to Polygons** 
 
-The `raster::extract()` function is a marvelous tool. We can pass a raster and a spatial object and it will pull the values from the raster that intersect with the spatial object. 
+The `terra::extract()` function is a marvelous tool. We can pass a raster and a spatial object and it will pull the values from the raster that intersect with the spatial object. 
 
-We can grab all the individual values using the function below.
-```{r block48}
+The function returns all extracted values as a numeric vector tied to an 'ID' related to the spatial features
+```{r block48, eval = FALSE}
 # extract values to a vector 
-t2$june_values <-raster::extract(x = r1, y = t2) ## maintain all features
-# View(t2)
+terra::extract(x = tempr, y = vect(tempc)) ## remember sf objects must be converted to `spatvect` objects to use in terra functions
 ```
 
-Or we call a summarizing function within the `extract()` function. This is great when you are looking for a single value like the mean. 
+Since there are multiple values for each census tract, we can call a summarizing function within the `extract()` function. This is great when you are looking for a single value like the mean. 
 
 ```{r block49}
-## generate a summarize radiance over each element of the spatial feature
-t2$june <- raster::extract(x = r1, y = t2, fun = mean) 
+## average the radiance values within each spatial feature
+tempc$june <- terra::extract(x = tempr, y = vect(tempc), fun = mean) 
 ```
 
-Calling a summarize function within the extract function is convenient, but you can always come back and run a summary on that data as a data frame operation. This can be faster and gives you more flexibility in what you can do later because you maintain the original data values extracted.   
 
-```{r block50}
-## convert to new measure 
-t2$june_mean2 <-lapply(t2$june_values, FUN=mean)
+**Comparing Census Data to Radiance**
 
-qtm(t2)
-```
-
-Depending on your needs, you can either call mean directly within the raster function or just capture the values and then calculate the mean. The second option is great if you want to run multiple descriptive statistics. One geoprocessing step feeds into multiple very efficient vector operations. 
-
-
-**Lining Up the Census Data with the Imagery**
-
-Our census data is across three counties. We need to make sure that we are only passing images that match the spatial extent of the census tract.
+Our census data is across three counties. Since our workflow is per county, we will need to subset our census tract data by county name.
 
 ```{r block51, eval=FALSE}
 View(censusData)
 ```
 
-We can do this by indexing between the GEOID in the county feature and the GEOID present in the census tract. It's a little tricky and relies on partial character matching, but it is way more efficient then using spatial operations to test for intersections when we know out rasters are limited to specific counties. 
+We can do this using `filter()` from the `dplyr` package and `str_detect()` from the `stringr` package, which detects specific character strings.
 
 ```{r block52}
-# pull the geoid for a county 
-id <- as.numeric(counties[1,"GEOID"])[1] ## this is returned as a list so there is an extra level of indexing to get the numeric value 
+censusHarris <- censusData %>% 
+  filter(str_detect(NAME, 'Harris'))
 
-# test for partial match across census tracks
-matches <- grepl(pattern = id, x = censusData$GEOID)
-```
-
-`grepl()` returns a vector of `TRUE` and `FALSE` results based on a pattern matching conditional statement. The great thing about this function it that is works with partial matches, whereas functions like `dplyr::filter()` and the `%in%` operator require exact matchs. 
-
-```{r block53}
-# partial match example 
-val <- 48029 
-items <- c(48029, 3048548029, 123045480290320487) 
-# test for partial match against all items
-grepl(pattern = val, x = items)
-# tests for exact match against any one item 
-val %in% items
-```
-
-We can use our matches vector to index the census tract data 
-
-```{r block54}
-qtm(censusData[matches, ])
+qtm(censusHarris)
 ```
 
 We now have only the census tracts associated with the specific county. 
@@ -816,98 +791,88 @@ Let's outline what needs to happen.
 
 The first loop will look very similar to what we have done previously.
 
-```{r block56}
+```{r block56, eval = FALSE}
 # loop over counties 
-for(i in seq_along(counties$STATEFP)){
-  # select GEOID, convert to numeric and index to drop geom
-  id <- as.numeric(as.data.frame(counties)[i,"GEOID"])
+for(i in seq_along(counties)){
+  # get county name
+  cName <- as.character(counties$NAME[i])
 
   ## subset the census data connected to a specific county
-  c1 <- censusData[grepl(pattern = id, x = censusData$GEOID),][1:3, ] ### we're only looking at the first few records because this will take a long time to run. 1,200 census tracks, 12 images = 14,400 spatial operations. Pretty sweet! Aren't you glad you're not clicking through this workflow :) 
+  c1 <- censusData %>% 
+    filter(str_detect(NAME, cName)) 
   
   # construct a file directory to show where to look for specific county images 
-  cName <- as.character(counties$NAME[i])
+  
   dir <- paste0("intermediateGeospatialR/data/nightLights/",cName)
   
   ## pull all rasters from a county of interest 
   rasters <- list.files(path = dir, pattern = ".tif", full.names = TRUE)
+  
 }
 ```
 
 We have our images and filtered census tract data so let's work on the second loop.
 
 ```{r block57, eval = FALSE}
-for(j in rasters){
+for(j in seq_along(rasters)){
     print(j)
-    r2 <- raster::raster(j) # read in image
+    r2 <- terra::rast(rasters[j]) # read in image
     n1 <- names(r2)
     # assigning column based on raster name and calculate mean value per area 
-    c1[,n1]  <- raster::extract(x =r2, y = c1, fun = mean)[,1] # extract returns a matrix, so we are indexing the column so we can store the data as a vector within the sf object. 
-    ### note were are adding to a dataframe as we run through this loop. That's 
-    ### not always the best thing to do. I just didn't want to write out column 
-    ### names before hand... efficiency is great but it's also not everything. 
+    c1[, n1]  <- terra::extract(x = r2, y = vect(c1), fun = mean)[,2] # extract returns a matrix, so we are indexing the column so we can store the data as a vector within the sf object. 
   }
 ```
 
+Since this workflow is creating 3 dataframes (one for each county), we need to store those at the end of each iteration as 'c1' becomes overwritten with the new county data at the beginning of the next iteration. A good way to do this is to save each output as an element in a list, and then you can combine elements of the list into a single dataframe afterwards.
 
-Okay, so we were lazy and rather simply stored our values directly with the subset of the census data. This is fine, but when we move through the loop our object `c1` is going to be redefined. We need to store that information elsewhere and have a means of compiling it for all additional iterations. We can do that using a simple conditional statement. 
-
-```{r block58, eval = FALSE}
-  ## condition to compile the datasets 
-if(i == 1) { # if we are in the first iteration of the loop, declare the new variable df
-  df <- c1
-} else { # when we are in a new iteration, add the data to the existing df variable. This build the dataframe. 
-  df <- dplyr::bind_rows(df, c1)
-}
+```{r block58}
+# create an empty list
+df <- list()
 ```
 
 Now we can add all the sections together. 
 
-```{r block59}
+```{r block59, results='hide'}
 # loop over counties 
-for(i in seq_along(counties$STATEFP)){
-  # select GEOID, convert numeric and index to drop geom
-  id <- as.numeric(as.data.frame(counties)[i,"GEOID"]) 
-  
+for(i in seq_along(counties)){
+ cName <- as.character(counties$NAME[i])
+
   ## subset the census data connected to a specific county
-  c1 <- censusData[grepl(pattern = id, x = censusData$GEOID),][1:3, ] 
+  c1 <- censusData %>% 
+    filter(str_detect(NAME, cName)) 
   
   # construct a file directory to show where to look for specific county images 
-  cName <- as.character(counties$NAME[i])
+  
   dir <- paste0("intermediateGeospatialR/data/nightLights/",cName)
   
   ## pull all rasters from a county of interest 
-  rasters <- list.files(path = dir,pattern = ".tif", full.names = TRUE)
-  for(j in rasters){
+  rasters <- list.files(path = dir, pattern = ".tif", full.names = TRUE)
+  
+  for(j in seq_along(rasters)){
     print(j)
-    r2 <- raster::raster(j) # read in image
+    r2 <- terra::rast(rasters[j]) # read in image
     n1 <- names(r2)
     # assigning column based on raster name and calculate mean value per area 
-    c1[,n1]  <- raster::extract(x =r2, y = c1, fun = mean)[,1] # extract returns a matrix so we are indexing the column so we can store the data as a vector within the sf object. 
+    c1[, n1]  <- terra::extract(x = r2, y = vect(c1), fun = mean)[,2] # extract returns a matrix, so we are indexing the column so we can store the data as a vector within the sf object. 
   }
   ## condition to compile the datasets, outside of the "j" loop
-  if(i == 1){
-    df <- c1
-  }else{ 
-    df <- dplyr::bind_rows(df, c1)
-  }
+  df[[i]] <- c1
 }
+
+# combine the data for each county into a single dataframe
+df <- bind_rows(df)
 # check the output
 # View(df)
 ```
-
-While the computer is busy working for you, you can continue procrastinating emails and contemplate how you're going to explain this process to project partners. Then it's done and we can see if there is anything of interest to the work we just put together. 
-
 
 
 ## Are Night Lights and Social Ecomonic Values Correlated?
 
 Now to start getting at the question we were initially interested in. 
-As this dataset did take a bit of time to put together, we can write out the feature to ensure we maintain it. 
+Since this dataset did take a bit of time to put together, we can write out the feature to ensure we maintain it. 
 
 ```{r block60, eval=FALSE}
-# you can write this out if you want, but I'm not going to yet
-sf::write_sf("intermediateGeospatialR/outputs/censusNightLightRadiance.shp")
+sf::write_sf(df, "intermediateGeospatialR/outputs/censusNightLightRadiance.shp")
 ```
 
 **Evaluating the Average Yearly Radiance** 
@@ -916,30 +881,28 @@ The ACS census data is representative of one year: 2015. Our night lights data i
 
 
 ```{r block61} 
-# let's also drop the spatial feature so it plays a little nicer with some functions. 
-df2 <- as.data.frame(df)
-names(df)
-# calculate the yearly average radiance for each 
-df2$averageRadiance <- rowMeans(df2[,9:20])
+# calculate the yearly average radiance for each feature and add a new column
+df <- df %>% 
+  as.data.frame() %>% 
+  mutate(averageRadiance = rowMeans(dplyr::select(., april_10arc:september_10arc), na.rm = TRUE)) %>% 
+  st_as_sf()
 
-# View(df2)
 ```
 
 We have our average values generated for each census tract so let's plot them and see how things look. 
 
 ```{r block62}
-### We now have an average yearly radiance for each location, so let's plot the relationship against radiance and see what we see.
+### We now have an average yearly radiance for each location, so let's plot the relationship between radiance and our socioeconomic variables
 library(ggplot2)
-ggplot(df2, aes(x = averageRadiance, y = estimate_age)) +
-  geom_point() +
-  facet_wrap( ~ NAME)
 
-age <- ggplot(df2, aes(estimate_age, averageRadiance)) +
+age <- ggplot(df, aes(medianAge_estimate, averageRadiance)) +
   geom_point() +
   stat_smooth()
-poverty <- ggplot(df2, aes(estimate_poverty, averageRadiance)) +
+
+poverty <- ggplot(df, aes(poverty_estimate, averageRadiance)) +
   geom_point() +
   stat_smooth()
+
 ```
 
 Looking at the age plot
@@ -947,33 +910,39 @@ Looking at the age plot
 ```{r block63}
 age
 ```
-It doesn't seem that strong but it seems like older people might like darker places? 
+
+There doesn't appear to be a strong relationship. What about poverty?
 
 ```{r block64}
 poverty
 ```
-The relationship between night light radiance and poverty does not seem much more informative. That said, we're only looking at a subset of the data. Also, it is possible that different cities show different patterns. 
+The relationship between night light radiance and poverty looks a little stronger than age, with higher poverty estimates in areas with higher radiance. 
+
+Lastly, lets look at these relationships spatially. 
+
+```{r block66}
+# create a facet map to show the census tracts. 
+tm_shape(df) +
+    tm_polygons(c("averageRadiance", "medianAge_estimate", "poverty_estimate")) +
+    tm_facets(sync = TRUE, ncol = 3)
+```
+
+<br>
+
 
 ## What About the Monthly Averages? 
 
-Disheartened by the weak relationships present in your revolutionary study, you decide that rather than assume your hypothesis was incorrect, it's better to assume you probably missed something. If we go back to the beginning of the lesson, we know that cloud cover affects the number of observations within a given month. It's possible that we should exclude some months from the analysis because of the limited number of observations that went into the mean. Let's first look at the variance of the average monthly values for each location. 
+Disheartened by the weak relationships present in your revolutionary study, maybe we should have first considered the quality of our raw data. If we go back to the beginning of the lesson, we know that cloud cover affects the number of observations within a given month. It's possible that we should exclude some months from the analysis because of the limited number of observations that went into the mean. Let's first look at the variance of the average monthly values for each location. 
 
 ```{r block65}
-# use apply to perform a row-wise operation on the data 
-df2$varianceRadiance <- apply(X = df2[,9:20],MARGIN = 1,FUN = sd)
-df2[,c(2,22,23)]
+# use rowise() and c_across() from dplyr to calculate standard deviation 
+df <- df %>% 
+  as.data.frame() %>% 
+  rowwise() %>% 
+  mutate(varianceRadiance = sd(c_across(april_10arc:september_10arc), na.rm = TRUE)) %>% 
+  st_as_sf()
+
 ```
 
 This gives us enough information to suggest it's worthwhile to evaluate the quality of the monthly images before going back to look at potential correlations. We'll be looking at this in the next lesson. 
 
-## One Last Thing 
-Ahh, while the correlative relationships between our census tract metrics and the nightlight radiance do look great on paper, they might look better on a map. 
-
-```{r block66}
-# assign values from our dataframe df2 to the spatial object. 
-df$averageRadiance <- df2$averageRadiance
-# create a facet map to show the census tracts. 
-tm_shape(df) +
-    tm_polygons(c("averageRadiance", "estimate_poverty", "estimate_age")) +
-    tm_facets(sync = TRUE, ncol = 3)
-```

@@ -15,5 +15,3 @@ packageLoad <-
       library(x[i], character.only = TRUE)
     }
   }
-
-packageLoad(c("raster", "dplyr", "sf","sp", "rgdal", "tmap", "plotly", "pacman"))
