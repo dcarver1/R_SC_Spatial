@@ -8,15 +8,15 @@
 clipMask2 <- function(raster, extent){
   # raster : a raster object 
   # extent : a spatial feature or extent object 
-  if(raster::extent(raster)< raster::extent(extent)){
+  if(terra::ext(raster) < terra::ext(extent)){
     print("The raster may be smaller then the extent object")
   }
-  if(!raster::compareCRS(x = raster, y = extent)){
+  if(terra::crs(raster) != terra::crs(extent)){
     return("The crs of the objects to not overlap")
   }else{
-    return(raster%>%
-      raster::crop(y = extent)%>%
-      raster::mask(mask = extent))
+    return(raster %>%
+      terra::crop(y = extent) %>%
+      terra::mask(mask = extent))
   }
 }
 
