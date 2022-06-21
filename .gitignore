@@ -1,2 +1,5 @@
 *.pptx
 .Rproj.user
+.Rhistory
+.RData
+.Ruserdata
